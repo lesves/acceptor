@@ -129,13 +129,16 @@ class Thesis(models.Model):
 
 
 class State(models.Model):
-	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+	code = models.CharField(
+		primary_key=True, 
+		max_length=32, 
+		verbose_name="Interní kód")
 
 	name = models.CharField(max_length=32, verbose_name="Název")
 	description = models.TextField()
 
 	def __str__(self):
-		return self.title
+		return self.name
 
 	class Meta:
 		verbose_name = "Stav"
