@@ -14,7 +14,8 @@ class SubjectAdmin(admin.ModelAdmin):
 
 
 class LogEntryInline(admin.TabularInline):
-	model = models.LogEntry
+    model = models.LogEntry
+    extra = 0
 
 
 class ConsultationInline(admin.TabularInline):
