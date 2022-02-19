@@ -1,0 +1,3 @@
+{% url 'archive-search' as archive_url %}
+
+{% include 'error.html' with code="404: Stránka nenalezena" message='Vámi požadovaná stránka nebyla nalezena. Nechcete zkusit <a href="'|add:archive_url|add:'">vyhledávání v archivu</a>?' %}
