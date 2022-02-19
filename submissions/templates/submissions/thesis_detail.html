@@ -118,7 +118,7 @@
 		{% if request.user == object.author %}
 			{% if object.state.code == "submitted" %}
 				{% include 'submissions/basic_action.html' with name="Zrušit odevzdání" action="thesis-submit-cancel" %}
-			{% else %}
+			{% elif object.state.code == "approved" %}
 				<p><a href="{% url 'attachment-upload' pk=object.pk %}" role="button">Přidat soubor</a>
 				<a href="{% url 'attachment-link' pk=object.pk %}" role="button">Přidat odkaz</a></p>
 				{% include 'submissions/basic_action.html' with name="Odevzdat" action="thesis-submit" %}
@@ -127,6 +127,33 @@
 	</ul>
 
 	<h2>Posudky</h2>
+	<ul>
+		<li>{% if object.opponent_opinion %}
+			<a href="{% url 'thesis-opponent-opinion' pk=object.pk %}">Posudek oponenta</a>
+			{% if object.opponent == request.user and object.state.code == "submitted" %}
+				<a href="{% url 'thesis-opponent-opinion-update' pk=object.pk %}" role="button">Upravit posudek</a>
+			{% endif %}
+		{% else %}
+			Čeká se na dodání posudku oponenta.
+			{% if object.opponent == request.user and object.state.code == "submitted" %}
+				<a href="{% url 'thesis-opponent-opinion-update' pk=object.pk %}" role="button">Dodat posudek</a>
+			{% endif %}
+		{% endif %}</li>
+		<li>{% if object.supervisor_opinion %}
+			<a href="{% url 'thesis-supervisor-opinion' pk=object.pk %}">Posudek vedoucího</a>
+			{% if object.supervisor == request.user and object.state.code == "submitted" %}
+				<a href="{% url 'thesis-supervisor-opinion-update' pk=object.pk %}" role="button">Upravit posudek</a>
+			{% endif %}
+		{% else %}
+			Čeká se na dodání posudku vedoucího.
+			{% if object.supervisor == request.user and object.state.code == "submitted" %}
+				<a href="{% url 'thesis-supervisor-opinion-update' pk=object.pk %}" role="button">Dodat posudek</a>
+			{% endif %}
+		{% endif %}</li>
+	</ul>
+	{% comment %}{% else %}
+		<p>Posudky budou dodány po odevzdání práce.</p>
+	{% endif %}{% endcomment %}
 
 	{% if object.firstpdf %}
 		<h2>Náhled</h2>

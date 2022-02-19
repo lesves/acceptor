@@ -31,6 +31,29 @@ class ThesisDetail(UserPassesTestMixin, DetailView):
 		)
 
 
+class OpinionDetail(ThesisDetail):
+	"""A detail view for a supervisor/opponent opinion"""
+
+	role = None
+	template_name_suffix = "_opinion"
+
+	def get_context_data(self, **kwargs):
+		assert self.role is not None
+
+		ctx = super().get_context_data()
+		ctx["role"] = self.role
+		return ctx
+
+	def get(self, request, *args, **kwargs):
+		self.object = self.get_object()
+		if self.role == "supervisor" and not self.object.supervisor_opinion:
+			raise Http404
+		elif self.role == "opponent" and not self.object.opponent_opinion:
+			raise Http404
+
+		return super().get(request, *args, **kwargs)
+
+
 class ThesisUpdate(UserPassesTestMixin, UpdateView):
 	model = Thesis
 
@@ -39,7 +62,33 @@ class ThesisUpdate(UserPassesTestMixin, UpdateView):
 		return (
 			self.request.user.has_perm("submissions.change_thesis") or 
 			self.request.user == self.object.supervisor or
-			self.request.user == self.object.author)
+			self.request.user == self.object.author
+		)
+
+
+class ThesisOpinionUpdate(UserPassesTestMixin, UpdateView):
+	model = Thesis
+	role = None
+
+	def form_valid(self, form):
+		res = super().form_valid(form)
+		if (form.instance.state and 
+				form.instance.state.code == "submitted" and 
+				form.instance.opponent_opinion and 
+				form.instance.supervisor_opinion):
+			form.instance.set_state_code("defense_ready", self.request.user)
+
+		return res
+
+	def test_func(self):
+		"""Check if the user is either the author or the supervisor"""
+		self.object = self.get_object()
+		if self.role == "supervisor":
+			return self.request.user == self.object.supervisor
+		elif self.role == "opponent":
+			return self.request.user == self.object.opponent
+		else:
+			raise AssertionError("role should not be None at this time")
 
 
 class ThesisAssignmentUpdate(ThesisUpdate):
@@ -92,13 +141,6 @@ class LogEntryCreate(UserPassesTestMixin, ThesisRelatedObjectCreate):
 		return (
 			self.request.user == self.thesis.supervisor or 
 			self.request.user.has_perm("submissions.change_thesis"))
-
-
-thesis_title_update = ThesisUpdate.as_view(fields=["title"])
-thesis_abstract_update = ThesisUpdate.as_view(fields=["abstract"])
-
-attachment_link_create = AttachmentCreate.as_view(model=models.Link, fields=["url"])
-attachment_file_create = AttachmentCreate.as_view(model=models.File, fields=["upload"])
 
 
 @login_required

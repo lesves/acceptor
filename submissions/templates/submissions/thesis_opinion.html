@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %} | Posudek {% if role == "opponent" %}oponenta{% else %}vedoucího{% endif %} k {{ object.title }}{% endblock %}
+
+{% block content %}
+	<a href="{% url 'thesis-detail' pk=object.pk %}">Zpět</a>
+
+	<h1>Posudek {% if role == "opponent" %}oponenta{% else %}vedoucího{% endif %} k {{ object.title }}</h1>
+	{% if role == "opponent" %}
+		{{ object.opponent_opinion|safe }}
+	{% else %}
+		{{ object.supervisor_opinion|safe }}
+	{% endif %}
+{% endblock %}

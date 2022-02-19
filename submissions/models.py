@@ -119,6 +119,7 @@ class Thesis(models.Model):
 			self.supervisor_opinion = bleach.clean(self.supervisor_opinion, tags=self.ALLOWED_TAGS)
 		if self.opponent_opinion:
 			self.opponent_opinion = bleach.clean(self.opponent_opinion, tags=self.ALLOWED_TAGS)
+
 		super().save(**kwargs)
 
 	def get_absolute_url(self):
@@ -163,6 +164,13 @@ class Thesis(models.Model):
 		return (
 			self.state is not None and 
 			self.state.code not in ("supervisor_approved", "author_approved")
+		)
+
+	@property
+	def is_closed(self):
+		return (
+			self.state is not None and
+			self.state.code in ("defended", "failed")
 		)
 
 	def firstpdf(self):
