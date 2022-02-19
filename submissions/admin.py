@@ -15,6 +15,8 @@ class SubjectAdmin(admin.ModelAdmin):
 
 class LogEntryInline(admin.TabularInline):
     model = models.LogEntry
+    readonly_fields = ("timestamp",)
+    ordering = ("timestamp",)
     extra = 0
 
 
@@ -25,6 +27,8 @@ class ConsultationInline(admin.TabularInline):
 
 class ThesisAdmin(admin.ModelAdmin):
     model = models.Thesis
+
+    readonly_fields = ("state",)
 
     inlines = [ConsultationInline, LogEntryInline]
 

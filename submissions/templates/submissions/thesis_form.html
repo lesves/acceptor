@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block extrahead %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/medium-editor@latest/dist/css/medium-editor.min.css" type="text/css" media="screen" charset="utf-8" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/medium-editor@latest/dist/css/themes/tim.min.css" type="text/css" media="screen" charset="utf-8" />
+    <script src="https://cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js"></script />
+    <script>
+        window.addEventListener("load", function() {
+            var editor = new MediumEditor("textarea", {
+                    placeholder: {
+                        text: "",
+                        hideOnClick: true
+                    },
+                    toolbar: {
+                        buttons: ['bold', 'italic', 'underline', 'anchor']
+                    },
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {%comment%}
+        <table>
+            
+            <tr><th></th><td><input type="submit" value="Uložit" /></td></tr>
+        </table>
+        {%endcomment%}
+        <input type="submit" value="Uložit" />
+    </form>
+{% endblock %}

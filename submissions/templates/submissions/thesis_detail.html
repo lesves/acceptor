@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %} | {{ object.title }}{% endblock %}
+
+{% block content %}
+	<h1>{{ object.title }}</h1>
+	{% if perms.change_thesis or object.author == request.user or object.supervisor == request.user %}
+		<a href="{% url 'thesis-title' pk=object.pk %}" role="button">Upravit název</a>
+	{% endif %}
+	<h2>Základní informace</h2>
+	<table>
+		<tr>
+			<th>Autor:</th>
+			<td>
+				{% if object.author is not None %}
+					{{ object.author.get_full_name }}
+					{% if object.author == request.user and not object.is_approved %}
+						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="author" %}
+					{% endif %}
+				{% else %}
+					nepřiřazen
+					{% if perms.submissions.author %}
+						{% include 'submissions/basic_action.html' with name="Přiřadit se" action="thesis-assign" role="author" %}
+					{% endif %}
+				{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<th>Vedoucí:</th>
+			<td>
+				{% if object.supervisor is not None %}
+					{{ object.supervisor.get_full_name }}
+					{% if object.supervisor == request.user and not object.is_approved %}
+						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="supervisor" %}
+					{% endif %}
+				{% else %}
+					nepřiřazen
+					{% if perms.submissions.supervisor %}
+						{% include 'submissions/basic_action.html' with name="Přiřadit se" action="thesis-assign" role="supervisor" %}
+					{% endif %}
+				{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<th>Oponent:</th>
+			<td>
+				{% if object.opponent is not None %}
+					{{ object.opponent.get_full_name }}
+					{% if object.opponent == request.user and not object.is_approved %}
+						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="opponent" %}
+					{% endif %}
+				{% else %}
+					nepřiřazen
+					{% if perms.submissions.opponent %}
+						{% include 'submissions/basic_action.html' with name="Přiřadit se" action="thesis-assign" role="opponent" %}
+					{% endif %}
+				{% endif %}
+			</td>
+		</tr>
+		<tr><th>Předmět:</th><td>{{ object.subject }}</td></tr>
+
+		<tr><th>Stav:</th><td>{{ object.state }}</td></tr>
+		<tr><th>Popis stavu:</th><td>{{ object.state.description }} (poslední změna stavu: {{ object.last_log_entry.user.get_full_name }} {{ object.last_log_entry.timestamp }})</td></tr>
+	</table>
+	{% if perms.change_thesis or object.supervisor == request.user %}
+		<a href="{% url 'thesis-state' pk=object.pk %}" role="button">Upravit stav</a>
+	{% endif %}
+
+	<h2>Klíčová slova</h2>
+	<ul class="keywords">
+		{% for keyword in object.keywords.all %}
+			<li class="keyword">{{ keyword }}</li>
+		{% endfor %}
+	</ul>
+
+	<h2>Abstrakt</h2>
+	{{ object.abstract|safe }}
+	<a href="{% url 'thesis-abstract' pk=object.pk %}" role="button">Upravit abstrakt</a>
+
+	<hr />
+
+	<h2>Zadání</h2>
+	{{ object.assignment|safe }}
+	{% if not object.is_approved %}
+		<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
+	{% elif perms.submissions.change_thesis %}
+		<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
+		<p><em>Pozn: mějte na vědomí, že při úpravě zadání již nedojde k obnovení schvalovacího procesu</em></p>
+	{% endif %}
+
+	{% if request.user == object.author and object.state.code == "supervisor_approved" %}
+		{% include 'submissions/basic_action.html' with action='thesis-approve' name="Schválit" %}
+	{% elif request.user == object.supervisor and object.state.code == "author_approved" %}
+		{% include 'submissions/basic_action.html' with action='thesis-approve' name="Schválit" %}
+	{% endif %}
+
+	<h2>Odevzdání</h2>
+	<ul>
+		{% for attachment in object.attachments.all %}
+			<li>
+				{% if attachment.link %}
+					<a href="{{ attachment.link }}">{{ attachment.link }}</a>
+				{% elif attachment.file %}
+					<a href="{{ attachment.file.upload.url }}" download>{{ attachment.file }}</a>
+				{% endif %}
+				{% if request.user == object.author and object.state.code == "approved" %}
+					<ul>
+						<li>
+							<form method="post" action="{% url 'attachment-delete' thesis_pk=object.pk pk=attachment.pk %}">
+								{% csrf_token %}
+								<input type="submit" value="Odstranit" />
+							</form>
+						</li>
+					</ul>
+				{% endif %}
+			</li>
+		{% endfor %}
+		{% if request.user == object.author %}
+			{% if object.state.code == "submitted" %}
+				{% include 'submissions/basic_action.html' with name="Zrušit odevzdání" action="thesis-submit-cancel" %}
+			{% else %}
+				<p><a href="{% url 'attachment-upload' pk=object.pk %}" role="button">Přidat soubor</a>
+				<a href="{% url 'attachment-link' pk=object.pk %}" role="button">Přidat odkaz</a></p>
+				{% include 'submissions/basic_action.html' with name="Odevzdat" action="thesis-submit" %}
+			{% endif %}
+		{% endif %}
+	</ul>
+
+	<h2>Posudky</h2>
+
+	{% if object.firstpdf %}
+		<h2>Náhled</h2>
+		<iframe src="{{ object.firstpdf.file.upload.url }}"></iframe>
+	{% endif %}
+
+	<p><a href="#siteheading" class="goup">Nahoru ↩</a></p>
+{% endblock %}

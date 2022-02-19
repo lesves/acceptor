@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SubmissionAttachment',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
             ],
         ),
         migrations.CreateModel(
@@ -93,6 +93,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Práce',
                 'verbose_name_plural': 'Práce',
+                'permissions': [('author', 'Může být autor'), ('supervisor', 'Může být vedoucí'), ('opponent', 'Může být oponent')],
             },
         ),
         migrations.AddField(
@@ -103,8 +104,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='LogEntry',
             fields=[
-                ('timestamp', models.DateTimeField(auto_created=True, verbose_name='Čas')),
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('timestamp', models.DateTimeField(auto_now_add=True, verbose_name='Čas')),
                 ('state', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='log_entries', to='submissions.state', verbose_name='Stav')),
                 ('thesis', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='log_entries', to='submissions.thesis', verbose_name='Práce')),
                 ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='log_entries', to=settings.AUTH_USER_MODEL, verbose_name='Měnil')),

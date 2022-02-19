@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.utils import timezone
+from django.urls import reverse
+from pathlib import Path
 import uuid
 
 import bleach
@@ -122,11 +125,94 @@ class Thesis(models.Model):
 		return reverse("thesis-detail", kwargs={"pk": self.pk})
 
 	def __str__(self):
+		if not self.author:
+			return f"nepřiřazen: {self.title}"
 		return f"{self.author}: {self.title}"
+
+	# Utility methods
+
+	def set_state(self, state, user):
+		"""Add a new log entry for setting the state"""
+		return LogEntry(thesis=self, state=state, user=user).save()
+
+	def set_state_code(self, state_code, user):
+		"""Add a new log entry for setting the state with the given code"""
+		return self.set_state(State.objects.get(code=state_code), user)
+
+	# Computed properties and methods
+
+	@property
+	def last_log_entry(self):
+		try:
+			return self.log_entries.latest("timestamp")
+		except LogEntry.DoesNotExist:
+			return None
+
+	@property
+	def state(self):
+		"""Return the current state of the thesis or None"""
+		entry = self.last_log_entry
+		if entry is None:
+			return None
+		return entry.state
+
+	state.fget.short_description = "Aktuální stav"
+
+	@property
+	def is_approved(self):
+		return (
+			self.state is not None and 
+			self.state.code not in ("supervisor_approved", "author_approved")
+		)
+
+	def firstpdf(self):
+		"""Return the first pdf in the submission. Used for preview."""
+		return self.attachments.filter(file__upload__endswith=".pdf").first()
+
+	# State transitions
+
+	def approve(self, user):
+		"""Reflect the assignment approval of the given user in the state"""
+		if user == self.author:
+			if not self.state:
+				self.set_state_code("author_approved", user)
+			elif self.state.code == "supervisor_approved":
+				self.set_state_code("approved", user)
+			else:
+				raise PermissionDenied(
+					"Thesis not in correct state for approval.")
+		elif user == self.supervisor:
+			if not self.state:
+				self.set_state_code("supervisor_approved", user)
+			elif self.state.code == "author_approved":
+				self.set_state_code("approved", user)
+			else:
+				raise PermissionDenied(
+					"Thesis not in correct state for approval.")
+		else:
+			raise PermissionDenied(
+				"Only the author or the supervisor \
+				can approve the assignment.")
+
+	def submit(self):
+		if self.state.code != "approved":
+			raise PermissionDenied("The thesis cannot be submitted in this state.")
+		self.set_state_code("submitted", self.author)
+
+	def cancel_submit(self):
+		if self.state.code != "submitted":
+			raise PermissionDenied("Cannot cancel submission when not submitted.")
+		self.set_state_code("approved", self.author)
 
 	class Meta:
 		verbose_name = "Práce"
 		verbose_name_plural = "Práce"
+
+		permissions = [
+			("author", "Může být autor"),
+			("supervisor", "Může být vedoucí"),
+			("opponent", "Může být oponent"),
+		]
 
 
 class State(models.Model):
@@ -166,7 +252,7 @@ class LogEntry(models.Model):
 		on_delete=models.SET_NULL, 
 		verbose_name="Měnil",
 		null=True)
-	timestamp = models.DateTimeField(auto_created=True, verbose_name="Čas")
+	timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Čas")
 
 	def __str__(self):
 		return f"Uživatel {self.user} změnil stav práce {self.thesis} na {self.state}"
@@ -177,9 +263,9 @@ class LogEntry(models.Model):
 
 
 class ConsultationPeriod(models.Model):
+	"""A period in which `count` consultations must take place."""
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-	"""A period in which `count` consultations must take place."""
 	subject = models.ForeignKey(
 		Subject, 
 		related_name="periods", 
@@ -200,9 +286,9 @@ class ConsultationPeriod(models.Model):
 
 
 class Consultation(models.Model):
+	"""A thesis consultation"""
 	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-	"""A thesis consultation"""
 	thesis = models.ForeignKey(
 		Thesis, 
 		related_name="consultations", 
@@ -229,6 +315,7 @@ class SubmissionAttachment(models.Model):
 		A submission attachment, uses multi-table inheritance
 		to distinguish between different types of attachments.
 	"""
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 	thesis = models.ForeignKey(Thesis, related_name="attachments", on_delete=models.CASCADE)
 
 
@@ -245,7 +332,7 @@ class File(SubmissionAttachment):
 	@staticmethod
 	@receiver(pre_delete, sender=SubmissionAttachment)
 	def delete_handler(sender, **kwargs):
-		if File.objects.filter(submission_ptr=kwargs["instance"]).exists() and kwargs["instance"].file.upload.name:
+		if File.objects.filter(submissionattachment_ptr=kwargs["instance"]).exists() and kwargs["instance"].file.upload.name:
 			try:
 				parent = Path(kwargs["instance"].file.upload.path).parent
 				kwargs["instance"].file.upload.delete()
