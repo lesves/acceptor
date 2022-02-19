@@ -20,5 +20,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('auth/', include('django.contrib.auth.urls')),
+    path('auth/', include('allauth.socialaccount.providers.google.urls')),
     path('', include("submissions.urls")),
 ]

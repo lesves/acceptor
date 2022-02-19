@@ -42,6 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+
     'submissions',
 ]
 
@@ -88,6 +93,28 @@ DATABASES = {
 
 
 # Authentication
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'APP': {
+            'client_id': '824128145343-nlm3r9b8ivh12mkmol2s2esd2gl1v9lp.apps.googleusercontent.com',
+            'secret': os.environ["GOOGLE_AUTH_SECRET"],
+            'key': '',
+        }
+    }
+}
+
+SOCIALACCOUNT_ADAPTER = "acceptor.accounts.SubmissionAccountAdapter"
+
 
 LOGIN_URL = "/auth/login/"
 LOGIN_REDIRECT_URL = "/"
@@ -154,3 +181,10 @@ MEDIA_ROOT = BASE_DIR / "media/"
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Application related config
+
+EMAIL_DOMAIN = "gjk.cz"
+IS_STUDENT_USERNAME = lambda username: username.startswith("x") and username[-1].isdigit()
+
