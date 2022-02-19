@@ -6,7 +6,7 @@ urlpatterns = [
     # Index
     path(
         '', 
-        views.TemplateView.as_view(template_name="index.html"), 
+        views.IndexView.as_view(), 
         name="index"
     ),
 

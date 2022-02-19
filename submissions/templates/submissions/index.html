@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<div id="index">
+		<div class="menu">
+			<h2>Menu</h2>
+			<ul role="menu">
+				{% if request.user.is_authenticated %}
+					{#<li><a href="{% url 'thesis-me' %}">Moje aktuální práce</a></li>#}
+					<li>
+						{#<a href="{% url 'thesis-list' %}">Všechny aktuální práce</a>#}
+						Aktuální práce
+						{%comment%}<ul>
+							{% for subject in subjects %}
+								<li>
+									<a href="{% url 'thesis-list' subject=subject %}">{{ subject }}</a>
+								</li>
+							{% endfor %}
+						</ul>{%endcomment%}
+					</li>
+				{% endif %}
+				{%comment%}<li><a href="{% url 'archive-search' %}">Vyhledávání v obhájených pracích</a></li>
+				<li><a href="{% url 'archive' %}">Archiv ročníků</a></li>{%endcomment%}
+			</ul>
+		</div>
+
+		<div class="user">
+			<h2>{% if request.user.is_authenticated %}
+				Přihlášen {% if request.user.profile.is_teacher %}učitel{% else %}student{% endif %} {{ request.user.get_full_name }}
+			{% else %}
+				Nejste přihlášeni.
+			{% endif %}</h2>
+			<ul role="menu">
+				{% if request.user.is_authenticated %}
+					<li><a href="{% url 'logout' %}">Odhlásit se</a></li>
+				{% else %}
+					<li><a href="{% url 'login' %}">Přihlásit se</a></li>
+				{% endif %}
+			</ul>
+		</div>
+	</div>
+{% endblock %}

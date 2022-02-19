@@ -16,6 +16,15 @@ from . import models
 from . import forms
 
 
+class IndexView(TemplateView):
+	template_name = "submissions/index.html"
+
+	def get_context_data(self, **kwargs):
+		ctx = super().get_context_data()
+		ctx["subjects"] = models.Subject.objects.all()
+		return ctx
+
+
 class ThesisDetail(UserPassesTestMixin, DetailView):
 	model = Thesis
 
