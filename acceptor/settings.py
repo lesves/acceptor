@@ -11,16 +11,20 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+import dotenv
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load dotenv
+dotenv.load_dotenv(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(=4w4&c9e)43kwhn9fera43we0hfydqdt_y)82s6q)qmr8$)$x'
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'submissions',
 ]
 
@@ -109,6 +114,17 @@ AUTH_PASSWORD_VALIDATORS = [
 
 if DEBUG:
     AUTH_PASSWORD_VALIDATORS = []
+
+
+# Emails
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_HOST_USER = os.environ["EMAIL_USER"]
+EMAIL_HOST_PASSWORD = os.environ["EMAIL_PASS"]
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = "Odevzdávací systém maturitních prací <acceptor@gjk.cz>"
 
 
 # Internationalization
