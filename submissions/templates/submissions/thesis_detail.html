@@ -72,6 +72,7 @@
 			<li class="keyword">{{ keyword }}</li>
 		{% endfor %}
 	</ul>
+	<a href="{% url 'thesis-keywords' pk=object.pk %}" role="button">Upravit klíčová slova</a>
 
 	<h2>Abstrakt</h2>
 	{{ object.abstract|default:"<p>Abstrakt ještě nebyl dodán.</p>"|safe }}

@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, models
+from . import forms, views, models
 
 
 urlpatterns = [
@@ -53,6 +53,11 @@ urlpatterns = [
         'thesis/<str:pk>/abstract', 
         views.ThesisUpdate.as_view(fields=["abstract"]), 
         name="thesis-abstract"
+    ),
+    path(
+        'thesis/<str:pk>/keywords',
+        views.ThesisUpdate.as_view(form_class=forms.ThesisKeywordUpdateForm),
+        name="thesis-keywords",
     ),
     path(
         'thesis/<str:pk>/state', 
