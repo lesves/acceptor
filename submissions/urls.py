@@ -16,6 +16,9 @@ urlpatterns = [
     path('theses/subject/<int:subject>/', views.CurrentThesisList.as_view(), name="thesis-list"),
     #path('theses/subject/<int:subject>/create/', views.ThesisCreate.as_view(), name="thesis-create"),
 
+    # Thesis create
+    path('thesis/create/', views.ThesisCreate.as_view(), name="thesis-create"),
+
     # Thesis detail
     path(
         'thesis/<str:pk>/', 

@@ -6,8 +6,6 @@
 
 	{% if subject %}
 		<h1>{{ subject }}</h1>
-
-		{#<a role="button" class="thesis-create-btn" href="{% url 'thesis-create' subject=subject.pk %}">Přidat novou práci</a>#}
 	{% elif is_my_list %}
 		<h1>Moje aktuální práce</h1>
 	{% else %}

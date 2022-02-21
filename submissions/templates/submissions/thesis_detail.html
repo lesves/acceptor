@@ -74,7 +74,7 @@
 	</ul>
 
 	<h2>Abstrakt</h2>
-	{{ object.abstract|safe }}
+	{{ object.abstract|default:"<p>Abstrakt ještě nebyl dodán.</p>"|safe }}
 	<a href="{% url 'thesis-abstract' pk=object.pk %}" role="button">Upravit abstrakt</a>
 
 	<hr />

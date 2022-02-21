@@ -43,7 +43,16 @@ class Subject(models.Model):
 	root = RootSubjectManager()
 
 	def __str__(self):
+		if self.parent:
+			return f"{self.parent}, {self.title}"
 		return self.title
+
+	def flattree(self):
+		stack = [self]
+		while stack:
+			subj = stack.pop()
+			yield subj
+			stack.extend(subj.children.all())
 
 	class Meta:
 		verbose_name = "Předmět"

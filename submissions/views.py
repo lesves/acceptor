@@ -39,15 +39,8 @@ class CurrentThesisList(UserPassesTestMixin, ListView):
 			return Thesis.objects.all().difference(Thesis.closed.all())
 
 		self.subject = models.Subject.objects.get(pk=self.kwargs["subject"])
-		subjects = []
 
-		stack = [self.subject]
-		while stack:
-			subj = stack.pop()
-			subjects.append(subj)
-			stack.extend(subj.children.all())
-
-		return Thesis.objects.filter(subject__in=subjects).difference(Thesis.closed.all())
+		return Thesis.objects.filter(subject__in=self.subject.flattree()).difference(Thesis.closed.all())
 
 	def get_context_data(self, **kwargs):
 		ctx = super().get_context_data()
@@ -105,6 +98,31 @@ class OpinionDetail(ThesisDetail):
 			raise Http404
 
 		return super().get(request, *args, **kwargs)
+
+
+class ThesisCreate(UserPassesTestMixin, CreateView):
+	model = Thesis
+	fields = ["title", "subject", "assignment"]
+
+	def test_func(self):
+		return (
+			self.request.user.has_perm("submissions.add_thesis") and
+			(
+				self.request.user.has_perm("submissions.author") or
+				self.request.user.has_perm("submissions.supervisor")
+			)
+		)
+
+	def form_valid(self, form):
+		if self.request.user.has_perm("submissions.author"):
+			form.instance.author = self.request.user
+			form.instance.save()
+			form.instance.set_state_code("author_approved", self.request.user)
+		else:
+			form.instance.supervisor = self.request.user
+			form.instance.save()
+			form.instance.set_state_code("supervisor_approved", self.request.user)
+		return super().form_valid(form)
 
 
 class ThesisUpdate(UserPassesTestMixin, UpdateView):
