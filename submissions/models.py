@@ -40,19 +40,30 @@ class Subject(models.Model):
 
 	# Managers
 	objects = models.Manager()
-	root = RootSubjectManager()
+	roots = RootSubjectManager()
 
 	def __str__(self):
 		if self.parent:
 			return f"{self.parent}, {self.title}"
 		return self.title
 
+	@property
+	def root(self):
+		node = self
+		while node.parent:
+			node = node.parent
+		return node
+
 	def flattree(self):
+		"""Return a flattened tree with starting with this subject node"""
 		stack = [self]
 		while stack:
 			subj = stack.pop()
 			yield subj
 			stack.extend(subj.children.all())
+
+	def inherited_periods(self):
+		return ConsultationPeriod.objects.filter(subject__in=self.root.flattree())
 
 	class Meta:
 		verbose_name = "Předmět"
@@ -207,6 +218,13 @@ class Thesis(models.Model):
 	def firstpdf(self):
 		"""Return the first pdf in the submission. Used for preview."""
 		return self.attachments.filter(file__upload__endswith=".pdf").first()
+
+	def periods(self):
+		"""Get the consultation periods and corresponding consultations as a dictionary"""
+		dct = {}
+		for period in self.subject.inherited_periods():
+			dct[period] = self.consultations.filter(period=period)
+		return dct
 
 	@classmethod
 	def current_of(cls, user):

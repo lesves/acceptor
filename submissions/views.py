@@ -23,7 +23,7 @@ class IndexView(TemplateView):
 	def get_context_data(self, **kwargs):
 		ctx = super().get_context_data()
 
-		ctx["subjects"] = models.Subject.root.all()
+		ctx["roots"] = models.Subject.roots.all()
 		return ctx
 
 
@@ -214,6 +214,22 @@ class LogEntryCreate(UserPassesTestMixin, ThesisRelatedObjectCreate):
 			self.request.user.has_perm("submissions.change_thesis"))
 
 
+class ConsultationCreate(UserPassesTestMixin, ThesisRelatedObjectCreate):
+	model = models.Consultation
+	form_class = forms.ConsultationForm
+
+	def test_func(self):
+		return not self.thesis.state.is_closed and (
+			self.request.user.has_perm("submissions.change_thesis") or
+			self.request.user == self.thesis.supervisor
+		)
+
+	def get_form_kwargs(self):
+		kwargs = super().get_form_kwargs()
+		kwargs["thesis"] = self.thesis
+		return kwargs
+
+
 @login_required
 @require_POST
 def attachment_delete(request, thesis_pk, pk):
@@ -223,6 +239,29 @@ def attachment_delete(request, thesis_pk, pk):
 	if at.thesis.author != request.user or at.thesis.state.code != "approved":
 		raise PermissionDenied()
 	at.delete()
+
+	return redirect("thesis-detail", pk=thesis_pk)
+
+
+@login_required
+@require_POST
+def consultation_delete(request, thesis_pk, pk):
+	"""Delete a consultation"""
+	con = get_object_or_404(models.Consultation, pk=pk)
+
+	if str(con.thesis.pk) != thesis_pk:
+		raise Http404
+	if (not request.user.has_perm("submissions.change_thesis") 
+			and not request.user == con.thesis.supervisor):
+		raise PermissionDenied(
+			"The current user cannot delete this consultation."
+		)
+	if con.thesis.state.is_closed:
+		raise PermissionDenied(
+			"Cannot delete consultation of thesis in a closed state."
+		)
+
+	con.delete()
 
 	return redirect("thesis-detail", pk=thesis_pk)
 

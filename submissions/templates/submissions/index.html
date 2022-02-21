@@ -12,7 +12,7 @@
 						{#<a href="{% url 'thesis-list' %}">Všechny aktuální práce</a>#}
 						Aktuální práce
 						<ul>
-							{% for subject in subjects %}
+							{% for subject in roots %}
 								<li><a href="{% url 'thesis-list' subject=subject.pk %}">{{ subject }}</a></li>
 							{% endfor %}
 						</ul>

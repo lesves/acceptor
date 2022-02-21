@@ -14,7 +14,6 @@ urlpatterns = [
     path('theses/', views.CurrentThesisList.as_view(), name="thesis-list"),
     path('theses/my-list/', views.MyThesisList.as_view(), name="thesis-me"),
     path('theses/subject/<int:subject>/', views.CurrentThesisList.as_view(), name="thesis-list"),
-    #path('theses/subject/<int:subject>/create/', views.ThesisCreate.as_view(), name="thesis-create"),
 
     # Thesis create
     path('thesis/create/', views.ThesisCreate.as_view(), name="thesis-create"),
@@ -94,6 +93,10 @@ urlpatterns = [
         views.submit_cancel, 
         name="thesis-submit-cancel"
     ),
+
+    # Consultations
+    path('thesis/<str:pk>/consultation/create', views.ConsultationCreate.as_view(), name="consultation-create"),
+    path('thesis/<str:thesis_pk>/consultation/<str:pk>/delete', views.consultation_delete, name="consultation-delete"),
 
     # Opinions
     path(

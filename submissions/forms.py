@@ -1,5 +1,24 @@
 from django import forms
-from .models import Thesis, Keyword
+from .models import Thesis, Keyword, Consultation, ConsultationPeriod
+from datetime import date
+
+
+class ConsultationForm(forms.ModelForm):
+	date = forms.DateField(
+		initial=date.today, 
+		widget=forms.SelectDateWidget(years=range(date.today().year-10, date.today().year+10))
+	)
+
+	def __init__(self, *args, **kwargs):
+		self.thesis = kwargs.pop("thesis")
+
+		super().__init__(*args, **kwargs)
+
+		self.fields["period"].queryset = self.thesis.subject.inherited_periods()
+
+	class Meta:
+		model = Consultation
+		fields = ["period", "date"]
 
 
 class KeywordWidget(forms.TextInput):
