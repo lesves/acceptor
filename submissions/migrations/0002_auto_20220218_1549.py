@@ -19,9 +19,15 @@ def apply_migration(apps, schema_editor):
 
     Permission = apps.get_model("auth", "Permission")
     Group.objects.get(name="Studenti").permissions.add(
+        Permission.objects.get(codename="add_thesis"),
+        Permission.objects.get(codename="view_thesis"),
         Permission.objects.get(codename="author"),
     )
     Group.objects.get(name="Učitelé").permissions.add(
+        Permission.objects.get(codename="add_thesis"),
+        Permission.objects.get(codename="view_thesis"),
+        Permission.objects.get(codename="change_thesis"),
+        Permission.objects.get(codename="delete_thesis"),
         *Permission.objects.filter(codename__in=["supervisor", "opponent"])
     )
 
@@ -31,11 +37,13 @@ def apply_migration(apps, schema_editor):
             code="supervisor_approved",
             name="Vedoucí schválil", 
             description="Zadání práce bylo schválené vedoucím. Čeká se na schválení autorem.",
+            is_approved=False,
         ),
         State(
             code="author_approved",
             name="Autor schválil",
             description="Zadání práce bylo schválené autorem. Čeká se na schválení vedoucím.",
+            is_approved=False,
         ),
         State(
             code="approved",
@@ -61,11 +69,13 @@ def apply_migration(apps, schema_editor):
             code="defended",
             name="Obhájena",
             description="Práce byla úspěšně obhájena",
+            is_closed=True,
         ),
         State(
             code="failed",
             name="Neobhájena",
-            description="Práce nebyla úspěšně obhájena."
+            description="Práce nebyla úspěšně obhájena.",
+            is_closed=True,
         )
     ])
 
@@ -73,7 +83,7 @@ def apply_migration(apps, schema_editor):
 def revert_migration(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
     Group.objects.filter(
-        name__in=["Student", "Učitel"]
+        name__in=["Studenti", "Učitelé"]
     ).delete()
 
     State = apps.get_model("submissions", "State")

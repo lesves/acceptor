@@ -14,7 +14,7 @@
 			<td>
 				{% if object.author is not None %}
 					{{ object.author.get_full_name }}
-					{% if object.author == request.user and not object.is_approved %}
+					{% if object.author == request.user %}
 						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="author" %}
 					{% endif %}
 				{% else %}
@@ -30,7 +30,7 @@
 			<td>
 				{% if object.supervisor is not None %}
 					{{ object.supervisor.get_full_name }}
-					{% if object.supervisor == request.user and not object.is_approved %}
+					{% if object.supervisor == request.user %}
 						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="supervisor" %}
 					{% endif %}
 				{% else %}
@@ -46,7 +46,7 @@
 			<td>
 				{% if object.opponent is not None %}
 					{{ object.opponent.get_full_name }}
-					{% if object.opponent == request.user and not object.is_approved %}
+					{% if object.opponent == request.user %}
 						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="opponent" %}
 					{% endif %}
 				{% else %}
@@ -81,7 +81,7 @@
 
 	<h2>Zadání</h2>
 	{{ object.assignment|safe }}
-	{% if not object.is_approved %}
+	{% if not object.state.is_approved %}
 		<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
 	{% elif perms.submissions.change_thesis %}
 		<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>

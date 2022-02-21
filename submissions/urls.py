@@ -10,6 +10,12 @@ urlpatterns = [
         name="index"
     ),
 
+    # Theses list
+    path('theses/', views.CurrentThesisList.as_view(), name="thesis-list"),
+    path('theses/my-list/', views.MyThesisList.as_view(), name="thesis-me"),
+    path('theses/subject/<int:subject>/', views.CurrentThesisList.as_view(), name="thesis-list"),
+    #path('theses/subject/<int:subject>/create/', views.ThesisCreate.as_view(), name="thesis-create"),
+
     # Thesis detail
     path(
         'thesis/<str:pk>/', 

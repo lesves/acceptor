@@ -1,8 +1,13 @@
 from django.db import models
+from django.db.models import Max
+from django.db.models.expressions import F
+
 from django.contrib.auth.models import User
+
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.urls import reverse
+
 from pathlib import Path
 import uuid
 
@@ -18,8 +23,24 @@ def upload_path(instance, filename):
 	return Path(str(instance.thesis.pk)) / filename
 
 
+class RootSubjectManager(models.Manager):
+	def get_queryset(self):
+		return super().get_queryset().filter(parent=None)
+
+
 class Subject(models.Model):
 	title = models.CharField(max_length=64, verbose_name="Název")
+	parent = models.ForeignKey(
+		"Subject", 
+		related_name="children", 
+		on_delete=models.SET_NULL,
+		null=True, blank=True,
+		verbose_name="Rodičovský předmět"
+	)
+
+	# Managers
+	objects = models.Manager()
+	root = RootSubjectManager()
 
 	def __str__(self):
 		return self.title
@@ -38,6 +59,18 @@ class Keyword(models.Model):
 	class Meta:
 		verbose_name = "Klíčové slovo"
 		verbose_name_plural = "Klíčová slova"
+
+
+class ClosedStateManager(models.Manager):
+	def get_queryset(self):
+		return (super()
+			.get_queryset()
+			.alias(
+				latest_logentry_date=Max("log_entries__timestamp")
+			).filter(
+				log_entries__timestamp=F("latest_logentry_date"),
+				log_entries__state__is_closed=True,
+			))
 
 
 class Thesis(models.Model):
@@ -100,13 +133,16 @@ class Thesis(models.Model):
 		null=True, blank=True, 
 		verbose_name="Posudek oponenta")
 
-	#is_postponed = models.BooleanField(default=False, verbose_name="Odložena?")
 	mark = models.PositiveSmallIntegerField(
 		null=True, blank=True, 
 		choices=MARK_CHOICES, 
 		verbose_name="Známka")
 
 	subject = models.ForeignKey(Subject, on_delete=models.PROTECT, related_name="theses", verbose_name="Předmět")
+
+	# Managers
+	objects = models.Manager()
+	closed = ClosedStateManager()
 
 	ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u"]
 
@@ -128,7 +164,7 @@ class Thesis(models.Model):
 	def __str__(self):
 		if not self.author:
 			return f"nepřiřazen: {self.title}"
-		return f"{self.author}: {self.title}"
+		return f"{self.author.get_full_name()}: {self.title}"
 
 	# Utility methods
 
@@ -159,23 +195,17 @@ class Thesis(models.Model):
 
 	state.fget.short_description = "Aktuální stav"
 
-	@property
-	def is_approved(self):
-		return (
-			self.state is not None and 
-			self.state.code not in ("supervisor_approved", "author_approved")
-		)
-
-	@property
-	def is_closed(self):
-		return (
-			self.state is not None and
-			self.state.code in ("defended", "failed")
-		)
-
 	def firstpdf(self):
 		"""Return the first pdf in the submission. Used for preview."""
 		return self.attachments.filter(file__upload__endswith=".pdf").first()
+
+	@classmethod
+	def current_of(cls, user):
+		"""Return a set of current theses of the given user"""
+		return (user.authored.all()
+			.union(user.supervised.all())
+			.union(user.opposed.all())
+			.difference(cls.closed.all()))
 
 	# State transitions
 
@@ -231,6 +261,9 @@ class State(models.Model):
 
 	name = models.CharField(max_length=32, verbose_name="Název")
 	description = models.TextField()
+
+	is_approved = models.BooleanField(default=True, verbose_name="Zadání schváleno?")
+	is_closed = models.BooleanField(default=False, verbose_name="Uzavřený?")
 
 	def __str__(self):
 		return self.name

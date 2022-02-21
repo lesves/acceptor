@@ -87,6 +87,9 @@ table.thesis-list {
 
 table.thesis-list th {
 	border: 1px solid var(--text-secondary);
+	border-bottom: 1px solid var(--action);
+	border-top: 1px solid var(--action);
+	
 	color: var(--text-secondary);
 	background: var(--action);
 	padding: 0.5em;
@@ -95,6 +98,14 @@ table.thesis-list th {
 table.thesis-list td {
 	border: 1px solid var(--action);
 	padding: 0.5em;
+}
+
+table.thesis-list th:first-child {
+	border-left: 1px solid var(--action);
+}
+
+table.thesis-list th:last-child {
+	border-right: 1px solid var(--action);
 }
 
 .unassigned {

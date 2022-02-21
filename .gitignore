@@ -1,3 +1,7 @@
+# Project specific
+media/
+
+# MacOS stuff
 .DS_Store
 
 # Byte-compiled / optimized / DLL files

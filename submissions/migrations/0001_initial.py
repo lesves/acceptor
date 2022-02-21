@@ -33,6 +33,8 @@ class Migration(migrations.Migration):
                 ('code', models.CharField(max_length=32, primary_key=True, serialize=False, verbose_name='Interní kód')),
                 ('name', models.CharField(max_length=32, verbose_name='Název')),
                 ('description', models.TextField()),
+                ('is_approved', models.BooleanField(default=True, verbose_name='Zadání schváleno?')),
+                ('is_closed', models.BooleanField(default=False, verbose_name='Uzavřený?')),
             ],
             options={
                 'verbose_name': 'Stav',
@@ -44,6 +46,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('title', models.CharField(max_length=64, verbose_name='Název')),
+                ('parent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='children', to='submissions.subject', verbose_name='Rodičovský předmět')),
             ],
             options={
                 'verbose_name': 'Předmět',

@@ -1,12 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 
+from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import UpdateView, CreateView
 
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
@@ -21,7 +22,50 @@ class IndexView(TemplateView):
 
 	def get_context_data(self, **kwargs):
 		ctx = super().get_context_data()
-		ctx["subjects"] = models.Subject.objects.all()
+
+		ctx["subjects"] = models.Subject.root.all()
+		return ctx
+
+
+class CurrentThesisList(UserPassesTestMixin, ListView):
+	"""A list view for current theses"""
+	model = Thesis
+
+	def test_func(self):
+		return self.request.user.has_perm("submissions.view_thesis")
+
+	def get_queryset(self):
+		if not self.kwargs.get("subject"):
+			return Thesis.objects.all().difference(Thesis.closed.all())
+
+		self.subject = models.Subject.objects.get(pk=self.kwargs["subject"])
+		subjects = []
+
+		stack = [self.subject]
+		while stack:
+			subj = stack.pop()
+			subjects.append(subj)
+			stack.extend(subj.children.all())
+
+		return Thesis.objects.filter(subject__in=subjects).difference(Thesis.closed.all())
+
+	def get_context_data(self, **kwargs):
+		ctx = super().get_context_data()
+		if self.kwargs.get("subject"):
+			ctx["subject"] = self.subject
+		return ctx
+
+
+class MyThesisList(LoginRequiredMixin, ListView):
+	"""A list view for the current theses of the current user"""
+	model = Thesis
+
+	def get_queryset(self):
+		return Thesis.current_of(self.request.user).order_by("title")
+
+	def get_context_data(self, **kwargs):
+		ctx = super().get_context_data()
+		ctx["is_my_list"] = True
 		return ctx
 
 
@@ -104,9 +148,9 @@ class ThesisAssignmentUpdate(ThesisUpdate):
 	fields = ["assignment"]
 
 	def post(self, request, *args, **kwargs):
-		if request.user == self.object.supervisor and not self.object.is_approved:
+		if request.user == self.object.supervisor and not self.object.state.is_approved:
 			self.object.set_state_code("supervisor_approved", request.user)
-		elif request.user == self.object.author and not self.object.is_approved:
+		elif request.user == self.object.author and not self.object.state.is_approved:
 			self.object.set_state_code("author_approved", request.user)
 		elif request.user.has_perm("submissions.change_thesis"):
 			pass
