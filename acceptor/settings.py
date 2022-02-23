@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
 
+    'django_q',
+
     'submissions',
 ]
 
@@ -89,6 +91,17 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+}
+
+# Task queue
+# used for running scheduled tasks
+
+Q_CLUSTER = {
+    "name": "default",
+    "orm": "default",
+    "label": "Úlohy ve frontě",
+    "timeout": 60,
+    "max_attempts": 2,
 }
 
 
@@ -185,6 +198,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Application related config
 
+EMAIL_SUBJECT_PREFIX = "[Odevzdávací systém] "
 EMAIL_DOMAIN = "gjk.cz"
 IS_STUDENT_USERNAME = lambda username: username.startswith("x") and username[-1].isdigit()
 USE_UNACCENT = False
+
+CONSULTATION_EMAIL_DAYS_LEFT = 7
+CONSULTATION_EMAIL_SUBJECT = f"{EMAIL_SUBJECT_PREFIX}Povinné konzultace"
+CONSULTATION_EMAIL_TEMPLATE = "\
+Zbývá Vám pouze {remaining_days} dní na splnění \
+povinných konzultací v tomto období. \
+Máte splněno {have} konzultací z požadovaných {required}."
+
+ADMINS = [("Lukáš Veškrna", "lukas.veskrna@gmail.com")]
