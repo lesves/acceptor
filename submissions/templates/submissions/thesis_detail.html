@@ -72,12 +72,16 @@
 			<li class="keyword">{{ keyword }}</li>
 		{% endfor %}
 	</ul>
-	<a href="{% url 'thesis-keywords' pk=object.pk %}" role="button">Upravit klíčová slova</a>
+	{% if perms.change_thesis or object.supervisor == request.user %}
+		<a href="{% url 'thesis-keywords' pk=object.pk %}" role="button">Upravit klíčová slova</a>
+	{% endif %}
 
 	<h2>Abstrakt</h2>
 	{{ object.abstract|default:"<p>Abstrakt ještě nebyl dodán.</p>"|safe }}
-	<a href="{% url 'thesis-abstract' pk=object.pk %}" role="button">Upravit abstrakt</a>
 
+	{% if perms.change_thesis or object.supervisor == request.user %}
+		<a href="{% url 'thesis-abstract' pk=object.pk %}" role="button">Upravit abstrakt</a>
+	{% endif %}
 	<hr />
 
 	<h2>Zadání</h2>
@@ -95,34 +99,36 @@
 		{% include 'submissions/basic_action.html' with action='thesis-approve' name="Schválit" %}
 	{% endif %}
 
-	<h2>Konzultace</h2>
-	<ul>
-		{% for period, consultations in object.periods.items %}
-			<li>
-				<h3>Období {{ period.start }} – {{ period.end }}</h3>
-				{% if consultations.count >= period.count %}
-					<p>{{ consultations.count }}/{{ period.count }} požadovaných konzultací – splněno</p>
-				{% else %}
-					<p class="warning">{{ consultations.count }}/{{ period.count }} požadovaných konzultací – nesplněno</p>
-				{% endif %}
-				<ul>
-					{% for c in consultations %}
-						<li>
-							{{ c.date }}
-							{% if request.user.perms.submissions.change_thesis or request.user == object.supervisor %}
-								<form method="post" action="{% url 'consultation-delete' thesis_pk=object.pk pk=c.pk %}">
-									{% csrf_token %}
-									<input type="submit" value="Odstranit" />
-								</form>
-							{% endif %}
-						</li>
-					{% endfor %}
-				</ul>
-			</li>
-		{% endfor %}
-	</ul>
-	{% if request.user.perms.submissions.change_thesis or request.user == object.supervisor %}
-		<a role="button" href="{% url 'consultation-create' pk=object.pk %}">Přidat konzultaci</a>
+	{% if perms.submissions.view_thesis or request.user == object.author or request.user == object.supervisor %}
+		<h2>Konzultace</h2>
+		<ul>
+			{% for period, consultations in object.periods.items %}
+				<li>
+					<h3>Období {{ period.start }} – {{ period.end }}</h3>
+					{% if consultations.count >= period.count %}
+						<p>{{ consultations.count }}/{{ period.count }} požadovaných konzultací – splněno</p>
+					{% else %}
+						<p class="warning">{{ consultations.count }}/{{ period.count }} požadovaných konzultací – nesplněno</p>
+					{% endif %}
+					<ul>
+						{% for c in consultations %}
+							<li>
+								{{ c.date }}
+								{% if request.user.perms.submissions.change_thesis or request.user == object.supervisor %}
+									<form method="post" action="{% url 'consultation-delete' thesis_pk=object.pk pk=c.pk %}">
+										{% csrf_token %}
+										<input type="submit" value="Odstranit" />
+									</form>
+								{% endif %}
+							</li>
+						{% endfor %}
+					</ul>
+				</li>
+			{% endfor %}
+		</ul>
+		{% if perms.submissions.change_thesis or request.user == object.supervisor %}
+			<a role="button" href="{% url 'consultation-create' pk=object.pk %}">Přidat konzultaci</a>
+		{% endif %}
 	{% endif %}
 
 	<h2>Odevzdání</h2>

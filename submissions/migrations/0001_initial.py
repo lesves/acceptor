@@ -34,7 +34,8 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=32, verbose_name='Název')),
                 ('description', models.TextField()),
                 ('is_approved', models.BooleanField(default=True, verbose_name='Zadání schváleno?')),
-                ('is_closed', models.BooleanField(default=False, verbose_name='Uzavřený?')),
+                ('is_closed', models.BooleanField(default=False, verbose_name='Práce uzavřena?')),
+                ('is_public', models.BooleanField(default=False, verbose_name='Práce zveřejněná?')),
             ],
             options={
                 'verbose_name': 'Stav',
@@ -83,7 +84,6 @@ class Migration(migrations.Migration):
                 ('abstract', models.TextField(blank=True, null=True, verbose_name='Abstrakt')),
                 ('year', models.IntegerField(default=submissions.models.current_year, verbose_name='Ročník')),
                 ('assignment', models.TextField(blank=True, null=True, verbose_name='Zadání')),
-                ('submission_date', models.DateTimeField(blank=True, null=True, verbose_name='Datum a čas odevzdání')),
                 ('supervisor_opinion', models.TextField(blank=True, null=True, verbose_name='Posudek vedoucího')),
                 ('opponent_opinion', models.TextField(blank=True, null=True, verbose_name='Posudek oponenta')),
                 ('mark', models.PositiveSmallIntegerField(blank=True, choices=[(1, 'výborně'), (2, 'chvalitebně'), (3, 'dobře'), (4, 'dostatečně'), (5, 'nedostatečně')], null=True, verbose_name='Známka')),

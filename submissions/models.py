@@ -81,7 +81,11 @@ class Keyword(models.Model):
 		verbose_name_plural = "Klíčová slova"
 
 
-class ClosedStateManager(models.Manager):
+class StateFilterManager(models.Manager):
+	def __init__(self, **kwargs):
+		self.kwargs = kwargs
+		super().__init__()
+
 	def get_queryset(self):
 		return (super()
 			.get_queryset()
@@ -89,7 +93,7 @@ class ClosedStateManager(models.Manager):
 				latest_logentry_date=Max("log_entries__timestamp")
 			).filter(
 				log_entries__timestamp=F("latest_logentry_date"),
-				log_entries__state__is_closed=True,
+				**self.kwargs,
 			))
 
 
@@ -140,11 +144,6 @@ class Thesis(models.Model):
 		null=True, blank=True, 
 		verbose_name="Zadání")
 
-	# Submission related fields
-	submission_date = models.DateTimeField(
-		null=True, blank=True, 
-		verbose_name="Datum a čas odevzdání")
-
 	# Defense related fields
 	supervisor_opinion = models.TextField(
 		null=True, blank=True, 
@@ -162,10 +161,10 @@ class Thesis(models.Model):
 
 	# Managers
 	objects = models.Manager()
-	closed = ClosedStateManager()
+	closed = StateFilterManager(log_entries__state__is_closed=True)
+	public = StateFilterManager(log_entries__state__is_public=True)
 
 	ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u"]
-
 	def save(self, **kwargs):
 		if self.abstract:
 			self.abstract = bleach.clean(self.abstract, self.ALLOWED_TAGS)
@@ -234,6 +233,11 @@ class Thesis(models.Model):
 			.union(user.opposed.all())
 			.difference(cls.closed.all()))
 
+	@classmethod
+	def public_years(cls):
+		"""Return the years in which there are some public theses."""
+		return cls.public.order_by("-year").values_list("year", flat=True).distinct()
+
 	# State transitions
 
 	def approve(self, user):
@@ -290,7 +294,8 @@ class State(models.Model):
 	description = models.TextField()
 
 	is_approved = models.BooleanField(default=True, verbose_name="Zadání schváleno?")
-	is_closed = models.BooleanField(default=False, verbose_name="Uzavřený?")
+	is_closed = models.BooleanField(default=False, verbose_name="Práce uzavřena?")
+	is_public = models.BooleanField(default=False, verbose_name="Práce zveřejněná?")
 
 	def __str__(self):
 		return self.name

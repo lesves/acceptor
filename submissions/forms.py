@@ -1,5 +1,11 @@
 from django import forms
-from .models import Thesis, Keyword, Consultation, ConsultationPeriod
+from django.conf import settings
+from django.core.exceptions import ValidationError
+
+from . import models
+from .models import Thesis, Keyword
+from .utils import split_person_name
+
 from datetime import date
 
 
@@ -17,7 +23,7 @@ class ConsultationForm(forms.ModelForm):
 		self.fields["period"].queryset = self.thesis.subject.inherited_periods()
 
 	class Meta:
-		model = Consultation
+		model = models.Consultation
 		fields = ["period", "date"]
 
 
@@ -72,3 +78,99 @@ class ThesisKeywordUpdateForm(forms.ModelForm):
 	class Meta:
 		model = Thesis
 		fields = ["keywords"]
+
+
+class SortedModelChoiceIterator(forms.models.ModelChoiceIterator):
+	def __iter__(self):
+		yield from sorted(super().__iter__(), key=lambda x: "" if not x[0] else x[1])
+
+
+class SubjectChoiceField(forms.ModelChoiceField):
+	iterator = SortedModelChoiceIterator
+
+
+class ThesisCreateForm(forms.ModelForm):
+	subject = SubjectChoiceField(
+		label="Předmět",
+		queryset=models.Subject.objects.get_queryset(),
+	)
+
+	class Meta:
+		model = models.Thesis
+		fields = ["title", "subject", "assignment"]
+
+
+class SearchForm(forms.Form):
+	title = forms.CharField(required=False, max_length=255, label="Název")
+	keywords = KeywordField(required=False, label="Klíčová slova", help_text="klíčová slova oddělte čárkami")
+	author_name = forms.CharField(required=False, label="Jméno autora")
+	supervisor_name = forms.CharField(required=False, label="Jméno vedoucího")
+	opponent_name = forms.CharField(required=False, label="Jméno oponenta")
+	year = forms.ChoiceField(required=False, choices=lambda: [(None, "Vše")] + [(y, str(y)) for y in Thesis.public_years()], label="Ročník")
+	subject = SubjectChoiceField(
+		required=False, empty_label="Vše", label="Předmět",
+		queryset=models.Subject.objects.get_queryset(),
+	)
+
+	def get_queryset(self):
+		qs = Thesis.public.get_queryset()
+
+		if self.cleaned_data["title"]:
+			if settings.USE_UNACCENT:
+				qs = qs.filter(title__unaccent__icontains=self.cleaned_data["title"])
+			else:
+				qs = qs.filter(title__icontains=self.cleaned_data["title"])
+
+		if self.cleaned_data["keywords"]:
+			for kw in self.cleaned_data["keywords"]:
+				qs = qs.filter(keywords=kw)
+
+		if self.cleaned_data["author_name"]:
+			first_name, last_name = split_person_name(self.cleaned_data["author_name"])
+
+			if settings.USE_UNACCENT:
+				qs = qs.filter(author__last_name__unaccent__iexact=last_name)
+			else:
+				qs = qs.filter(author__last_name__iexact=last_name)
+
+			if first_name:
+				if settings.USE_UNACCENT:
+					qs = qs.filter(author__first_name__unaccent__iexact=first_name)
+				else:
+					qs = qs.filter(author__first_name__iexact=first_name)
+
+		if self.cleaned_data["supervisor_name"]:
+			first_name, last_name = split_person_name(self.cleaned_data["supervisor_name"])
+
+			if settings.USE_UNACCENT:
+				qs = qs.filter(supervisor__last_name__unaccent__iexact=last_name)
+			else:
+				qs = qs.filter(supervisor__last_name__iexact=last_name)
+
+			if first_name:
+				if settings.USE_UNACCENT:
+					qs = qs.filter(supervisor__first_name__unaccent__iexact=first_name)
+				else:
+					qs = qs.filter(supervisor__first_name__iexact=first_name)
+
+		if self.cleaned_data["opponent_name"]:
+			first_name, last_name = split_person_name(self.cleaned_data["opponent_name"])
+
+			if settings.USE_UNACCENT:
+				qs = qs.filter(opponent__last_name__unaccent__iexact=last_name)
+			else:
+				qs = qs.filter(opponent__last_name__iexact=last_name)
+
+			if first_name:
+				if settings.USE_UNACCENT:
+					qs = qs.filter(opponent__first_name__unaccent__iexact=first_name)
+				else:
+					qs = qs.filter(opponent__first_name__iexact=first_name)
+
+		if self.cleaned_data["year"]:
+			qs = qs.filter(year=self.cleaned_data["year"])
+
+		if self.cleaned_data["subject"]:
+			qs = qs.filter(subject=self.cleaned_data["subject"])
+
+		return qs

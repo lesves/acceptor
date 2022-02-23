@@ -12,6 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 
+from .utils import SearchView
 from .models import Thesis
 from . import models
 from . import forms
@@ -67,7 +68,7 @@ class ThesisDetail(UserPassesTestMixin, DetailView):
 
 	def test_func(self):
 		self.object = self.get_object()
-		if self.object.state is not None and self.object.state.code == "defended":
+		if self.object.state.is_public:
 			return True
 		return (
 			self.request.user.has_perm("submissions.view_thesis") or 
@@ -102,7 +103,7 @@ class OpinionDetail(ThesisDetail):
 
 class ThesisCreate(UserPassesTestMixin, CreateView):
 	model = Thesis
-	fields = ["title", "subject", "assignment"]
+	form_class = forms.ThesisCreateForm
 
 	def test_func(self):
 		return (
@@ -228,6 +229,15 @@ class ConsultationCreate(UserPassesTestMixin, ThesisRelatedObjectCreate):
 		kwargs = super().get_form_kwargs()
 		kwargs["thesis"] = self.thesis
 		return kwargs
+
+
+class ArchiveSearch(SearchView):
+	model = Thesis
+	form_class = forms.SearchForm
+
+
+def archive(request):
+	return render(request, "submissions/thesis_archive.html", {"years": Thesis.public_years()})
 
 
 @login_required

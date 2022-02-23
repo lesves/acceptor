@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<ul>
+		{% for year in years %}
+			<li><a href="{% url 'archive-search' %}?year={{year}}">{{ year }}</a></li>
+		{% endfor %}
+	</ul>
+{% endblock %}

@@ -70,6 +70,7 @@ def apply_migration(apps, schema_editor):
             name="Obhájena",
             description="Práce byla úspěšně obhájena",
             is_closed=True,
+            is_public=True,
         ),
         State(
             code="failed",

@@ -125,6 +125,10 @@ urlpatterns = [
         views.OpinionDetail.as_view(role="supervisor"), 
         name="thesis-supervisor-opinion"
     ),
+
+    # Archive
+    path('archive/', views.archive, name="archive"),
+    path('archive/search/', views.ArchiveSearch.as_view(), name="archive-search")
 ]
 
 

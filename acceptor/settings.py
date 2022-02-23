@@ -187,4 +187,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_DOMAIN = "gjk.cz"
 IS_STUDENT_USERNAME = lambda username: username.startswith("x") and username[-1].isdigit()
-
+USE_UNACCENT = False
