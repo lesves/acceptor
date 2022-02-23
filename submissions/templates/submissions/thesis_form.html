@@ -20,6 +20,10 @@
 {% endblock %}
 
 {% block content %}
+    {% if object %}
+        <a href="{% url 'thesis-detail' pk=object.pk %}">Zpět</a>
+    {% endif %}
+
     <form action="" method="post">
         {% csrf_token %}
         {{ form.as_p }}

@@ -56,12 +56,17 @@ urlpatterns = [
     path(
         'thesis/<str:pk>/keywords',
         views.ThesisUpdate.as_view(form_class=forms.ThesisKeywordUpdateForm),
-        name="thesis-keywords",
+        name="thesis-keywords"
     ),
     path(
         'thesis/<str:pk>/state', 
         views.LogEntryCreate.as_view(), 
         name="thesis-state"
+    ),
+    path(
+        'thesis/<str:pk>/evaluation',
+        views.ThesisEvaluation.as_view(),
+        name="thesis-evaluation"
     ),
     path('thesis/<str:pk>/approve', views.approve, name="thesis-approve"),
 

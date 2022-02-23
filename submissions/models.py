@@ -251,7 +251,9 @@ class Thesis(models.Model):
 
 	def approve(self, user):
 		"""Reflect the assignment approval of the given user in the state"""
-		if user == self.author:
+		if user == self.author and user == self.supervisor:
+			self.set_state_code("approved", user)
+		elif user == self.author:
 			if not self.state:
 				self.set_state_code("author_approved", user)
 			elif self.state.code == "supervisor_approved":
@@ -273,7 +275,7 @@ class Thesis(models.Model):
 				can approve the assignment.")
 
 	def submit(self):
-		if not self.state.is_approved:
+		if not self.state.is_approved or self.state.is_submitted:
 			raise PermissionDenied("The thesis cannot be submitted in this state.")
 		self.set_state_code("submitted", self.author)
 

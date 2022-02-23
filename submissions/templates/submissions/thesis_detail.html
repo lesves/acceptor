@@ -64,6 +64,9 @@
 	</table>
 	{% if perms.change_thesis or object.supervisor == request.user %}
 		<a href="{% url 'thesis-state' pk=object.pk %}" role="button">Upravit stav</a>
+		{% if object.state.is_submitted %}
+			<a href="{% url 'thesis-evaluation' pk=object.pk %}" role="button">Nastavit hodnocení</a>
+		{% endif %}
 	{% endif %}
 
 	<h2>Klíčová slova</h2>
