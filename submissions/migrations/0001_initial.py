@@ -34,6 +34,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=32, verbose_name='Název')),
                 ('description', models.TextField()),
                 ('is_approved', models.BooleanField(default=True, verbose_name='Zadání schváleno?')),
+                ('is_submitted', models.BooleanField(default=True, verbose_name='Práce odevzdána?')),
                 ('is_closed', models.BooleanField(default=False, verbose_name='Práce uzavřena?')),
                 ('is_public', models.BooleanField(default=False, verbose_name='Práce zveřejněná?')),
             ],

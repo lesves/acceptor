@@ -114,48 +114,57 @@ class Thesis(models.Model):
 		related_name="authored", 
 		on_delete=models.PROTECT, 
 		null=True, blank=True, 
-		verbose_name="Autor")
+		verbose_name="Autor"
+	)
 	supervisor = models.ForeignKey(
 		User, 
 		related_name="supervised", 
 		on_delete=models.PROTECT, 
 		null=True, blank=True, 
-		verbose_name="Vedoucí")
+		verbose_name="Vedoucí"
+	)
 	opponent = models.ForeignKey(User, 
 		related_name="opposed", 
 		on_delete=models.PROTECT, 
 		null=True, blank=True, 
-		verbose_name="Oponent")
+		verbose_name="Oponent"
+	)
 
 	# Informative fields
 	title = models.CharField(max_length=255, verbose_name="Název")
 	abstract = models.TextField(
 		null=True, blank=True, 
-		verbose_name="Abstrakt")
+		verbose_name="Abstrakt"
+	)
 	keywords = models.ManyToManyField(
 		Keyword, 
 		blank=True, 
-		verbose_name="Klíčová slova")
+		verbose_name="Klíčová slova"
+	)
 
 	year = models.IntegerField(default=current_year, verbose_name="Ročník")
 
 	# Assignment related fields
 	assignment = models.TextField(
 		null=True, blank=True, 
-		verbose_name="Zadání")
+		verbose_name="Zadání"
+	)
 
 	# Defense related fields
 	supervisor_opinion = models.TextField(
 		null=True, blank=True, 
-		verbose_name="Posudek vedoucího")
+		verbose_name="Posudek vedoucího"
+	)
 	opponent_opinion = models.TextField(
 		null=True, blank=True, 
-		verbose_name="Posudek oponenta")
+		verbose_name="Posudek oponenta"
+	)
 
 	mark = models.PositiveSmallIntegerField(
 		null=True, blank=True, 
 		choices=MARK_CHOICES, 
-		verbose_name="Známka")
+		verbose_name="Známka"
+	)
 
 	subject = models.ForeignKey(Subject, on_delete=models.PROTECT, related_name="theses", verbose_name="Předmět")
 
@@ -167,7 +176,7 @@ class Thesis(models.Model):
 	ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u"]
 	def save(self, **kwargs):
 		if self.abstract:
-			self.abstract = bleach.clean(self.abstract, self.ALLOWED_TAGS)
+			self.abstract = bleach.clean(self.abstract, tags=self.ALLOWED_TAGS)
 		if self.assignment:
 			self.assignment = bleach.clean(self.assignment, tags=self.ALLOWED_TAGS)
 		if self.supervisor_opinion:
@@ -264,13 +273,13 @@ class Thesis(models.Model):
 				can approve the assignment.")
 
 	def submit(self):
-		if self.state.code != "approved":
+		if not self.state.is_approved:
 			raise PermissionDenied("The thesis cannot be submitted in this state.")
 		self.set_state_code("submitted", self.author)
 
 	def cancel_submit(self):
-		if self.state.code != "submitted":
-			raise PermissionDenied("Cannot cancel submission when not submitted.")
+		if not self.state.is_submitted or self.state.is_closed:
+			raise PermissionDenied("Cannot cancel submission.")
 		self.set_state_code("approved", self.author)
 
 	class Meta:
@@ -294,8 +303,13 @@ class State(models.Model):
 	description = models.TextField()
 
 	is_approved = models.BooleanField(default=True, verbose_name="Zadání schváleno?")
+	is_submitted = models.BooleanField(default=True, verbose_name="Práce odevzdána?")
 	is_closed = models.BooleanField(default=False, verbose_name="Práce uzavřena?")
 	is_public = models.BooleanField(default=False, verbose_name="Práce zveřejněná?")
+
+	@property
+	def submittable(self):
+		return self.is_approved and not self.is_submitted
 
 	def __str__(self):
 		return self.name

@@ -144,7 +144,7 @@ class ThesisOpinionUpdate(UserPassesTestMixin, UpdateView):
 
 	def form_valid(self, form):
 		res = super().form_valid(form)
-		if (form.instance.state and 
+		if (form.instance.state and # TODO: solve this better
 				form.instance.state.code == "submitted" and 
 				form.instance.opponent_opinion and 
 				form.instance.supervisor_opinion):
@@ -197,7 +197,7 @@ class AttachmentCreate(UserPassesTestMixin, ThesisRelatedObjectCreate):
 	template_name = "submissions/submit.html"
 
 	def test_func(self):
-		return self.thesis.state.code == "approved" and self.request.user == self.thesis.author
+		return self.thesis.state.submittable and self.request.user == self.thesis.author
 
 
 class LogEntryCreate(UserPassesTestMixin, ThesisRelatedObjectCreate):
@@ -246,7 +246,7 @@ def attachment_delete(request, thesis_pk, pk):
 	at = get_object_or_404(models.SubmissionAttachment, pk=pk)
 	if str(at.thesis.pk) != thesis_pk:
 		raise Http404
-	if at.thesis.author != request.user or at.thesis.state.code != "approved":
+	if not (at.thesis.state.submittable and at.thesis.author == request.user):
 		raise PermissionDenied()
 	at.delete()
 

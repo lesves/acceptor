@@ -38,17 +38,20 @@ def apply_migration(apps, schema_editor):
             name="Vedoucí schválil", 
             description="Zadání práce bylo schválené vedoucím. Čeká se na schválení autorem.",
             is_approved=False,
+            is_submitted=False,
         ),
         State(
             code="author_approved",
             name="Autor schválil",
             description="Zadání práce bylo schválené autorem. Čeká se na schválení vedoucím.",
             is_approved=False,
+            is_submitted=False,
         ),
         State(
             code="approved",
             name="Zadání schváleno",
             description="Zadání bylo schválené vedoucím i autorem. Je možné přistoupit ke konzultacím a realizaci práce.",
+            is_submitted=False,
         ),
         State(
             code="submitted",
