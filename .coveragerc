@@ -1,0 +1,5 @@
+[run]
+command_line = manage.py test submissions
+omit = 
+	submissions/migrations/*
+	manage.py
