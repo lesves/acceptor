@@ -1,4 +1,4 @@
 <form action="{% if role %}{% url action pk=object.pk role=role %}{% else %}{% url action pk=object.pk %}{% endif %}" method="POST">
 	{% csrf_token %}
-	<input type="submit" value="{{ name }}" />
+	<input class="action" type="submit" value="{{ name }}" />
 </form>

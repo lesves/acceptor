@@ -5,8 +5,9 @@
 {% block content %}
 	<h1>{{ object.title }}</h1>
 	{% if perms.change_thesis or object.author == request.user or object.supervisor == request.user %}
-		<a href="{% url 'thesis-title' pk=object.pk %}" role="button">Upravit název</a>
+		<a href="{% url 'thesis-title' pk=object.pk %}" class="action" role="button">Upravit název</a>
 	{% endif %}
+	<article>
 	<h2>Základní informace</h2>
 	<table>
 		<tr>
@@ -63,144 +64,162 @@
 		<tr><th>Popis stavu:</th><td>{{ object.state.description }} (poslední změna stavu: {{ object.last_log_entry.user.get_full_name }} {{ object.last_log_entry.timestamp }})</td></tr>
 	</table>
 	{% if perms.change_thesis or object.supervisor == request.user %}
-		<a href="{% url 'thesis-state' pk=object.pk %}" role="button">Upravit stav</a>
+		<a href="{% url 'thesis-state' pk=object.pk %}" class="action" role="button">Upravit stav</a>
 		{% if object.state.is_submitted %}
-			<a href="{% url 'thesis-evaluation' pk=object.pk %}" role="button">Nastavit hodnocení</a>
+			<a href="{% url 'thesis-evaluation' pk=object.pk %}" class="action" role="button">Nastavit hodnocení</a>
 		{% endif %}
 	{% endif %}
+	</article>
 
-	<h2>Klíčová slova</h2>
-	<ul class="keywords">
-		{% for keyword in object.keywords.all %}
-			<li class="keyword">{{ keyword }}</li>
-		{% endfor %}
-	</ul>
-	{% if perms.change_thesis or object.supervisor == request.user %}
-		<a href="{% url 'thesis-keywords' pk=object.pk %}" role="button">Upravit klíčová slova</a>
-	{% endif %}
+	<article>
+		<h2>Klíčová slova</h2>
+		<div class="grid" style="margin-bottom: 1rem;">
+			{% for keyword in object.keywords.all %}
+				<span class="keyword">{{ keyword }}</span>
+			{% endfor %}
+		</div>
+		{% if perms.change_thesis or object.supervisor == request.user %}
+			<a href="{% url 'thesis-keywords' pk=object.pk %}" class="action" role="button">Upravit klíčová slova</a>
+		{% endif %}
+	</article>
 
-	<h2>Abstrakt</h2>
-	{{ object.abstract|default:"<p>Abstrakt ještě nebyl dodán.</p>"|safe }}
+	<article>
+		<h2>Abstrakt</h2>
+		{{ object.abstract|default:"<p>Abstrakt ještě nebyl dodán.</p>"|safe }}
 
-	{% if perms.change_thesis or object.supervisor == request.user %}
-		<a href="{% url 'thesis-abstract' pk=object.pk %}" role="button">Upravit abstrakt</a>
-	{% endif %}
-	<hr />
+		{% if perms.change_thesis or object.supervisor == request.user %}
+			<a href="{% url 'thesis-abstract' pk=object.pk %}" role="button">Upravit abstrakt</a>
+		{% endif %}
+	</article>
 
-	<h2>Zadání</h2>
-	{{ object.assignment|safe }}
-	{% if not object.state.is_approved %}
-		<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
-	{% elif perms.submissions.change_thesis %}
-		<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
-		<p><em>Pozn: mějte na vědomí, že při úpravě zadání již nedojde k obnovení schvalovacího procesu</em></p>
-	{% endif %}
+	<article>
+		<h2>Zadání</h2>
+		{{ object.assignment|safe }}
+		{% if not object.state.is_approved %}
+			{% if request.user == object.author or request.user == object.supervisor %}
+				<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
+			{% endif %}
+		{% elif perms.submissions.change_thesis %}
+			<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
+			<p><em>Pozn: mějte na vědomí, že při úpravě zadání již nedojde k obnovení schvalovacího procesu</em></p>
+		{% endif %}
 
-	{% if request.user == object.author and object.state.code == "supervisor_approved" %}
-		{% include 'submissions/basic_action.html' with action='thesis-approve' name="Schválit" %}
-	{% elif request.user == object.supervisor and object.state.code == "author_approved" %}
-		{% include 'submissions/basic_action.html' with action='thesis-approve' name="Schválit" %}
-	{% endif %}
+		{% if request.user == object.author and object.state.code == "supervisor_approved" %}
+			{% include 'submissions/basic_action.html' with action='thesis-approve' name="Schválit" %}
+		{% elif request.user == object.supervisor and object.state.code == "author_approved" %}
+			{% include 'submissions/basic_action.html' with action='thesis-approve' name="Schválit" %}
+		{% endif %}
+	</article>
 
-	{% if perms.submissions.view_thesis or request.user == object.author or request.user == object.supervisor %}
-		<h2>Konzultace</h2>
+	<article>
+		{% if perms.submissions.view_thesis or request.user == object.author or request.user == object.supervisor %}
+			<h2>Konzultace</h2>
+			<ul>
+				{% for period, consultations in object.periods.items %}
+					<li>
+						<details>
+						<summary>
+						<h3>Období {{ period.start }} – {{ period.end }}</h3>
+						{% if consultations.count >= period.count %}
+							<p>{{ consultations.count }}/{{ period.count }} požadovaných konzultací – splněno</p>
+						{% else %}
+							<p class="warning">{{ consultations.count }}/{{ period.count }} požadovaných konzultací – nesplněno</p>
+						{% endif %}
+						</summary>
+						<ul>
+							{% for c in consultations %}
+								<li>
+									{{ c.date }}
+									{% if perms.submissions.change_thesis or request.user == object.supervisor %}
+										<p>{{ c.note }}</p>
+
+										<form method="post" action="{% url 'consultation-delete' thesis_pk=object.pk pk=c.pk %}">
+											{% csrf_token %}
+											<input type="submit" class="action" value="Odstranit" />
+										</form>
+									{% endif %}
+								</li>
+							{% endfor %}
+						</ul>
+						</details>
+					</li>
+				{% endfor %}
+			</ul>
+			{% if perms.submissions.change_thesis or request.user == object.supervisor %}
+				<a class="action" role="button" href="{% url 'consultation-create' pk=object.pk %}">Přidat konzultaci</a>
+			{% endif %}
+		{% endif %}
+	</article>
+
+	<article>
+		<h2>Odevzdání</h2>
 		<ul>
-			{% for period, consultations in object.periods.items %}
+			{% for attachment in object.attachments.all %}
 				<li>
-					<h3>Období {{ period.start }} – {{ period.end }}</h3>
-					{% if consultations.count >= period.count %}
-						<p>{{ consultations.count }}/{{ period.count }} požadovaných konzultací – splněno</p>
-					{% else %}
-						<p class="warning">{{ consultations.count }}/{{ period.count }} požadovaných konzultací – nesplněno</p>
+					{% if attachment.link %}
+						<a href="{{ attachment.link }}">{{ attachment.link }}</a>
+					{% elif attachment.file %}
+						<a href="{{ attachment.file.upload.url }}" download>{{ attachment.file }}</a>
 					{% endif %}
-					<ul>
-						{% for c in consultations %}
+					{% if request.user == object.author and object.state.code == "approved" %}
+						<ul>
 							<li>
-								{{ c.date }}
-								{% if perms.submissions.change_thesis or request.user == object.supervisor %}
-									<p>{{ c.note }}</p>
-
-									<form method="post" action="{% url 'consultation-delete' thesis_pk=object.pk pk=c.pk %}">
-										{% csrf_token %}
-										<input type="submit" value="Odstranit" />
-									</form>
-								{% endif %}
+								<form method="post" action="{% url 'attachment-delete' thesis_pk=object.pk pk=attachment.pk %}">
+									{% csrf_token %}
+									<input type="submit" class="action" value="Odstranit" />
+								</form>
 							</li>
-						{% endfor %}
-					</ul>
+						</ul>
+					{% endif %}
 				</li>
 			{% endfor %}
+			{% if request.user == object.author %}
+				{% if object.state.code == "submitted" %}
+					{% include 'submissions/basic_action.html' with name="Zrušit odevzdání" action="thesis-submit-cancel" %}
+				{% elif object.state.code == "approved" %}
+					<p><a href="{% url 'attachment-upload' pk=object.pk %}" class="action" role="button">Přidat soubor</a>
+					<a href="{% url 'attachment-link' pk=object.pk %}" class="action" role="button">Přidat odkaz</a></p>
+					{% include 'submissions/basic_action.html' with name="Odevzdat" action="thesis-submit" %}
+				{% endif %}
+			{% endif %}
 		</ul>
-		{% if perms.submissions.change_thesis or request.user == object.supervisor %}
-			<a role="button" href="{% url 'consultation-create' pk=object.pk %}">Přidat konzultaci</a>
-		{% endif %}
-	{% endif %}
+	</article>
 
-	<h2>Odevzdání</h2>
-	<ul>
-		{% for attachment in object.attachments.all %}
-			<li>
-				{% if attachment.link %}
-					<a href="{{ attachment.link }}">{{ attachment.link }}</a>
-				{% elif attachment.file %}
-					<a href="{{ attachment.file.upload.url }}" download>{{ attachment.file }}</a>
+	<article>
+		<h2>Posudky</h2>
+		<ul>
+			<li>{% if object.opponent_opinion %}
+				<a href="{% url 'thesis-opponent-opinion' pk=object.pk %}">Posudek oponenta</a>
+				{% if object.opponent == request.user and object.state.code == "submitted" %}
+					<a href="{% url 'thesis-opponent-opinion-update' pk=object.pk %}" class="action" role="button">Upravit posudek</a>
 				{% endif %}
-				{% if request.user == object.author and object.state.code == "approved" %}
-					<ul>
-						<li>
-							<form method="post" action="{% url 'attachment-delete' thesis_pk=object.pk pk=attachment.pk %}">
-								{% csrf_token %}
-								<input type="submit" value="Odstranit" />
-							</form>
-						</li>
-					</ul>
+			{% else %}
+				Čeká se na dodání posudku oponenta.
+				{% if object.opponent == request.user and object.state.code == "submitted" %}
+					<a href="{% url 'thesis-opponent-opinion-update' pk=object.pk %}" class="action" role="button">Dodat posudek</a>
 				{% endif %}
-			</li>
-		{% endfor %}
-		{% if request.user == object.author %}
-			{% if object.state.code == "submitted" %}
-				{% include 'submissions/basic_action.html' with name="Zrušit odevzdání" action="thesis-submit-cancel" %}
-			{% elif object.state.code == "approved" %}
-				<p><a href="{% url 'attachment-upload' pk=object.pk %}" role="button">Přidat soubor</a>
-				<a href="{% url 'attachment-link' pk=object.pk %}" role="button">Přidat odkaz</a></p>
-				{% include 'submissions/basic_action.html' with name="Odevzdat" action="thesis-submit" %}
-			{% endif %}
-		{% endif %}
-	</ul>
-
-	<h2>Posudky</h2>
-	<ul>
-		<li>{% if object.opponent_opinion %}
-			<a href="{% url 'thesis-opponent-opinion' pk=object.pk %}">Posudek oponenta</a>
-			{% if object.opponent == request.user and object.state.code == "submitted" %}
-				<a href="{% url 'thesis-opponent-opinion-update' pk=object.pk %}" role="button">Upravit posudek</a>
-			{% endif %}
-		{% else %}
-			Čeká se na dodání posudku oponenta.
-			{% if object.opponent == request.user and object.state.code == "submitted" %}
-				<a href="{% url 'thesis-opponent-opinion-update' pk=object.pk %}" role="button">Dodat posudek</a>
-			{% endif %}
-		{% endif %}</li>
-		<li>{% if object.supervisor_opinion %}
-			<a href="{% url 'thesis-supervisor-opinion' pk=object.pk %}">Posudek vedoucího</a>
-			{% if object.supervisor == request.user and object.state.code == "submitted" %}
-				<a href="{% url 'thesis-supervisor-opinion-update' pk=object.pk %}" role="button">Upravit posudek</a>
-			{% endif %}
-		{% else %}
-			Čeká se na dodání posudku vedoucího.
-			{% if object.supervisor == request.user and object.state.code == "submitted" %}
-				<a href="{% url 'thesis-supervisor-opinion-update' pk=object.pk %}" role="button">Dodat posudek</a>
-			{% endif %}
-		{% endif %}</li>
-	</ul>
-	{% comment %}{% else %}
-		<p>Posudky budou dodány po odevzdání práce.</p>
-	{% endif %}{% endcomment %}
+			{% endif %}</li>
+			<li>{% if object.supervisor_opinion %}
+				<a href="{% url 'thesis-supervisor-opinion' pk=object.pk %}">Posudek vedoucího</a>
+				{% if object.supervisor == request.user and object.state.code == "submitted" %}
+					<a href="{% url 'thesis-supervisor-opinion-update' pk=object.pk %}" class="action" role="button">Upravit posudek</a>
+				{% endif %}
+			{% else %}
+				Čeká se na dodání posudku vedoucího.
+				{% if object.supervisor == request.user and object.state.code == "submitted" %}
+					<a href="{% url 'thesis-supervisor-opinion-update' pk=object.pk %}" class="action" role="button">Dodat posudek</a>
+				{% endif %}
+			{% endif %}</li>
+		</ul>
+		{% comment %}{% else %}
+			<p>Posudky budou dodány po odevzdání práce.</p>
+		{% endif %}{% endcomment %}
+	</article>
 
 	{% if object.firstpdf %}
-		<h2>Náhled</h2>
-		<iframe src="{{ object.firstpdf.file.upload.url }}"></iframe>
+		<article>
+			<h2>Náhled</h2>
+			<iframe style="width: 100%; height: 100vh" src="{{ object.firstpdf.file.upload.url }}"></iframe>
+		</article>
 	{% endif %}
-
-	<p><a href="#siteheading" class="goup">Nahoru ↩</a></p>
 {% endblock %}

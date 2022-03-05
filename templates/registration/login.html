@@ -3,17 +3,28 @@
 
 
 {% block content %}
-	<h2>Přihlášení</h2>
-	<h3>Přihlásit se Googlem</h3>
-	<form method="post" action="{% provider_login_url 'google' %}">
-		{% csrf_token %}
-		<input type="submit" value="Přihlásit se" />
-	</form>
-
-	<h3>Přihlásit se heslem</h3>
-	<form method="post">
-		{% csrf_token %}
-		{{ form.as_p }}
-		<input type="submit" value="Přihlásit se" />
-	</form>
+	<article>
+		<header>
+			<h1>Přihlášení</h1>
+		</header>
+		<div class="grid">
+			<div>
+				<h3>Přihlásit se heslem</h3>
+				<form method="post">
+					{% csrf_token %}
+					{{ form.as_p }}
+					<input type="submit" value="Přihlásit se" />
+				</form>
+				<a href="{% url 'account_reset_password' %}">Zapomenuté heslo?</a>
+			</div>
+			<div>
+				<h3>Přihlásit se školním Google účtem</h3>
+				<div style="visibility: hidden;">{{ form.as_p }}</div>
+				<form method="post" action="{% provider_login_url 'google' %}">
+					{% csrf_token %}
+					<input type="submit" value="Přihlásit se Googlem" />
+				</form>
+			</div>
+		</div>
+	</article>
 {% endblock %}

@@ -53,14 +53,10 @@ class CurrentThesisList(UserPassesTestMixin, ListView):
 class MyThesisList(LoginRequiredMixin, ListView):
 	"""A list view for the current theses of the current user"""
 	model = Thesis
+	template_name_suffix = "_my_list"
 
 	def get_queryset(self):
 		return Thesis.current_of(self.request.user).order_by("title")
-
-	def get_context_data(self, **kwargs):
-		ctx = super().get_context_data()
-		ctx["is_my_list"] = True
-		return ctx
 
 
 class ThesisDetail(UserPassesTestMixin, DetailView):

@@ -1,28 +1,43 @@
 {% load static %}
+{% load auth_extras %}
+
 <!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-		<link rel="stylesheet" href="{% static 'css/normalize.css' %}" />
+		<link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css" />
 		<link rel="stylesheet" href="{% static 'css/main.css' %}" />
 
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
-
-		<title>Odevzdávací systém{% block title %}{% endblock %}</title>
+		<title>Odevzdávací systém GJK{% block title %}{% endblock %}</title>
 
 		{% block extrahead %}
 		{% endblock %}
 	</head>
 	<body>
-		<a role="heading" id="siteheading" class="logo" href="{% url 'index' %}"><img src="{% static 'images/logo.png' %}" role="logo" /><span>Odevzdávací systém maturitních prací</span></a>
+		<main class="container">
+			<nav>
+				<ul>
+					<li><strong><a href="{% url 'index' %}">GJK – Odevzdávací systém maturitních prací</a></strong></li>
+				</ul>
+				<ul>
+					<li>{% if request.user.is_authenticated %}
+						Přihlášen {% if request.user|has_group:"Studenti" %}student {% elif request.user|has_group:"Učitelé" %}učitel {% endif %}{{ request.user.get_full_name }}
+					{% else %}
+						Nejste přihlášeni.
+					{% endif %}</li>
+					{% if request.user.is_authenticated %}
+						<li><a href="{% url 'account_change_password' %}">Změna hesla</a></li>
+						<li><a href="{% url 'logout' %}">Odhlásit se</a></li>
+					{% else %}
+						<li><a href="{% url 'login' %}">Přihlásit se</a></li>
+					{% endif %}
+				</ul>
+			</nav>
 
-		<div id="content">
 			{% block content %}
 			{% endblock %}
-		</div>
+		</main>
 	</body>
 </html>

@@ -6,30 +6,30 @@
 
 	{% if subject %}
 		<h1>{{ subject }}</h1>
-	{% elif is_my_list %}
-		<h1>Moje aktuální práce</h1>
 	{% else %}
-		<h1>Aktuální práce</h1>
+		<h1>{% block heading %}Aktuální práce{% endblock %}</h1>
 	{% endif %}
 
-	<table class="thesis-list">
-		<tr>
-			<th>Téma</th>
-			<th>Autor</th>
-			<th>Vedoucí</th>
-			<th>Oponent</th>
-			<th>Klíčová slova</th>
-			<th>Předmět</th>
-		</tr>
-		{% for thesis in object_list %}
+	<article>
+		<table>
 			<tr>
-				<td><a href="{{ thesis.get_absolute_url }}">{{ thesis.title }}</a></td>
-				<td>{{ thesis.author.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
-				<td>{{ thesis.supervisor.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
-				<td>{{ thesis.opponent.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
-				<td>{% for kw in thesis.keywords.all %}<a class="keyword" href="{% url 'archive-search' %}?keywords={{ kw }}">{{ kw }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-				<td>{{ thesis.subject }}</td>
+				<th>Téma</th>
+				<th>Autor</th>
+				<th>Vedoucí</th>
+				<th>Oponent</th>
+				<th>Klíčová slova</th>
+				<th>Předmět</th>
 			</tr>
-		{% endfor %}
-	</table>
+			{% for thesis in object_list %}
+				<tr>
+					<td><a href="{{ thesis.get_absolute_url }}">{{ thesis.title }}</a></td>
+					<td>{{ thesis.author.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
+					<td>{{ thesis.supervisor.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
+					<td>{{ thesis.opponent.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
+					<td>{% for kw in thesis.keywords.all %}<a class="keyword" href="{% url 'archive-search' %}?keywords={{ kw }}">{{ kw }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+					<td>{{ thesis.subject }}</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</article>
 {% endblock %}

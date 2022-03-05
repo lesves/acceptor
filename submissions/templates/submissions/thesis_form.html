@@ -21,7 +21,7 @@
 
 {% block content %}
     {% if object %}
-        <a href="{% url 'thesis-detail' pk=object.pk %}">Zpět</a>
+        <a role="button" href="{% url 'thesis-detail' pk=object.pk %}">Zpět</a>
     {% endif %}
 
     <form action="" method="post">
