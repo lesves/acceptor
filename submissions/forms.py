@@ -24,7 +24,7 @@ class ConsultationForm(forms.ModelForm):
 
 	class Meta:
 		model = models.Consultation
-		fields = ["period", "date"]
+		fields = ["period", "date", "note"]
 
 
 class KeywordWidget(forms.TextInput):

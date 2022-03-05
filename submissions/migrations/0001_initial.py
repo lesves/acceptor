@@ -138,6 +138,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('date', models.DateField(verbose_name='Datum')),
+                ('note', models.TextField(blank=True, verbose_name='Poznámky')),
                 ('period', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='consultations', to='submissions.consultationperiod', verbose_name='Období')),
                 ('thesis', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='consultations', to='submissions.thesis', verbose_name='Práce')),
             ],

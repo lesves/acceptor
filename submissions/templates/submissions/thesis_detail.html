@@ -117,7 +117,9 @@
 						{% for c in consultations %}
 							<li>
 								{{ c.date }}
-								{% if request.user.perms.submissions.change_thesis or request.user == object.supervisor %}
+								{% if perms.submissions.change_thesis or request.user == object.supervisor %}
+									<p>{{ c.note }}</p>
+
 									<form method="post" action="{% url 'consultation-delete' thesis_pk=object.pk pk=c.pk %}">
 										{% csrf_token %}
 										<input type="submit" value="Odstranit" />

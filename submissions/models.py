@@ -14,9 +14,13 @@ import uuid
 import bleach
 
 
+ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u"]
+
+
 def current_year():
 	"""Helper function for a default year"""
 	return timezone.now().year
+
 
 def upload_path(instance, filename):
 	"""Helper function. Return the upload path for a file submission."""
@@ -173,16 +177,15 @@ class Thesis(models.Model):
 	closed = StateFilterManager(log_entries__state__is_closed=True)
 	public = StateFilterManager(log_entries__state__is_public=True)
 
-	ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u"]
 	def save(self, **kwargs):
 		if self.abstract:
-			self.abstract = bleach.clean(self.abstract, tags=self.ALLOWED_TAGS)
+			self.abstract = bleach.clean(self.abstract, tags=ALLOWED_TAGS)
 		if self.assignment:
-			self.assignment = bleach.clean(self.assignment, tags=self.ALLOWED_TAGS)
+			self.assignment = bleach.clean(self.assignment, tags=ALLOWED_TAGS)
 		if self.supervisor_opinion:
-			self.supervisor_opinion = bleach.clean(self.supervisor_opinion, tags=self.ALLOWED_TAGS)
+			self.supervisor_opinion = bleach.clean(self.supervisor_opinion, tags=ALLOWED_TAGS)
 		if self.opponent_opinion:
-			self.opponent_opinion = bleach.clean(self.opponent_opinion, tags=self.ALLOWED_TAGS)
+			self.opponent_opinion = bleach.clean(self.opponent_opinion, tags=ALLOWED_TAGS)
 
 		super().save(**kwargs)
 
@@ -390,9 +393,15 @@ class Consultation(models.Model):
 		null=True, 
 		verbose_name="Období")
 	date = models.DateField(verbose_name="Datum")
+	note = models.TextField(blank=True, verbose_name="Poznámky")
 
 	def __str__(self):
 		return f"Konzultace {self.date}"
+
+	def save(self, **kwargs):
+		self.note = bleach.clean(self.note, tags=ALLOWED_TAGS)
+
+		super().save(**kwargs)
 
 	class Meta:
 		verbose_name = "Konzultace"
