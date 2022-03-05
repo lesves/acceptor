@@ -159,26 +159,6 @@ class ThesisOpinionUpdate(UserPassesTestMixin, UpdateView):
 			raise AssertionError("role should not be None at this time")
 
 
-class ThesisEvaluation(UserPassesTestMixin, UpdateView):
-	model = Thesis
-	fields = ["mark"]
-
-	def test_func(self):
-		self.object = self.get_object()
-		return (
-			self.request.user.has_perm("submissions.change_thesis") or 
-			self.request.user == self.object.supervisor
-		)
-
-	def form_valid(self, form):
-		res = super().form_valid(form)
-		if form.instance.mark == 5:
-			form.instance.set_state_code("failed", self.request.user)
-		elif form.instance.mark is not None:
-			form.instance.set_state_code("defended", self.request.user)
-		return res
-
-
 class ThesisAssignmentUpdate(ThesisUpdate):
 	fields = ["assignment"]
 
@@ -230,6 +210,23 @@ class LogEntryCreate(UserPassesTestMixin, ThesisRelatedObjectCreate):
 			self.request.user == self.thesis.supervisor or 
 			self.request.user.has_perm("submissions.change_thesis")
 		)
+
+
+class ThesisEvaluation(UserPassesTestMixin, UpdateView):
+	model = Thesis
+	form_class = forms.ThesisEvaluationForm
+
+	def test_func(self):
+		self.object = self.get_object()
+		return (
+			self.request.user.has_perm("submissions.change_thesis") or 
+			self.request.user == self.object.supervisor
+		)
+
+	def form_valid(self, form):
+		res = super().form_valid(form)
+		form.instance.set_state(form.cleaned_data["state"], self.request.user)
+		return res
 
 
 class ConsultationCreate(UserPassesTestMixin, ThesisRelatedObjectCreate):

@@ -71,9 +71,15 @@ def apply_migration(apps, schema_editor):
         State(
             code="defended",
             name="Obhájena",
-            description="Práce byla úspěšně obhájena",
+            description="Práce byla úspěšně obhájena.",
             is_closed=True,
             is_public=True,
+        ),
+        State(
+            code="defended_nonpublic",
+            name="Obhájena, neveřejná",
+            description="Práce byla úspěšně obhájena. Práce není zveřejněna v archivu.",
+            is_closed=True,
         ),
         State(
             code="failed",
@@ -100,6 +106,7 @@ def revert_migration(apps, schema_editor):
             "defense_ready",
             "postponed",
             "defended",
+            "defended_nonpublic",
             "failed",
         ]
     ).delete()

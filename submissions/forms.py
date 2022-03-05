@@ -80,6 +80,14 @@ class ThesisKeywordUpdateForm(forms.ModelForm):
 		fields = ["keywords"]
 
 
+class ThesisEvaluationForm(forms.ModelForm):
+	state = forms.ModelChoiceField(label="Stav", queryset=models.State.objects.filter(is_closed=True))
+
+	class Meta:
+		model = Thesis
+		fields = ["mark"]
+
+
 class SortedModelChoiceIterator(forms.models.ModelChoiceIterator):
 	def __iter__(self):
 		yield from sorted(super().__iter__(), key=lambda x: "" if not x[0] else x[1])

@@ -60,6 +60,7 @@
 		</tr>
 		<tr><th>Předmět:</th><td>{{ object.subject }}</td></tr>
 
+		<tr><th>Známka:</th><td>{{ object.mark_verbose }}</td></tr>
 		<tr><th>Stav:</th><td>{{ object.state }}</td></tr>
 		<tr><th>Popis stavu:</th><td>{{ object.state.description }} (poslední změna stavu: {{ object.last_log_entry.user.get_full_name }} {{ object.last_log_entry.timestamp }})</td></tr>
 	</table>

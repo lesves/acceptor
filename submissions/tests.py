@@ -279,10 +279,10 @@ class SystemTestCase(TestCase):
 		self.assertEquals(thesis.mark, None)
 
 		self.client.login(username="adam", password="smith")
-		self.assertEquals(403, self.client.post(f"{thesis_url}evaluation", {"mark": "1"}).status_code)
+		self.assertEquals(403, self.client.post(f"{thesis_url}evaluation", {"mark": "1", "state": "defended"}).status_code)
 
 		self.client.login(username="john", password="doe")
-		self.assertRedirects(self.client.post(f"{thesis_url}evaluation", {"mark": "1"}), thesis_url)
+		self.assertRedirects(self.client.post(f"{thesis_url}evaluation", {"mark": "1", "state": "defended"}), thesis_url)
 
 		thesis.refresh_from_db()
 		self.assertEquals(thesis.mark, 1)

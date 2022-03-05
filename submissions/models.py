@@ -224,6 +224,13 @@ class Thesis(models.Model):
 			return None
 		return entry.state
 
+	@property
+	def mark_verbose(self):
+		for m, name in self.MARK_CHOICES:
+			if self.mark == m:
+				return name
+		return "-"
+
 	state.fget.short_description = "Aktuální stav"
 
 	def firstpdf(self):
