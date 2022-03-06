@@ -18,3 +18,8 @@ button.action, input[type="submit"].action, a[role="button"] {
 	padding: var(--form-element-spacing-vertical) var(--form-element-spacing-horizontal);
 	outline: 0;
 }
+
+iframe {
+	width: 100%; 
+	height: 100vh;
+}

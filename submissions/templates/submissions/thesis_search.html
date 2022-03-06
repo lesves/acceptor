@@ -5,7 +5,7 @@
 	<h2>Vyhledávání</h2>
 	<article>
 		<p>Vyplňte pouze pole, kterými chcete zúžit výběr.</p>
-		<form method="get">
+		<form method="get" action="#results">
 			<table>
 				{{ form.as_table }}
 				<tr><th></th><td><input type="submit" value="Vyhledat" /></td></tr>
@@ -14,4 +14,4 @@
 	</article>
 {% endblock %}
 
-{% block heading %}Nalezené práce{% endblock %}
+{% block heading %}<h1 id="results">Nalezené práce</h1>{% endblock %}

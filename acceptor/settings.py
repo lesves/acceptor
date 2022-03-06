@@ -205,9 +205,5 @@ USE_UNACCENT = False
 
 CONSULTATION_EMAIL_DAYS_LEFT = 7
 CONSULTATION_EMAIL_SUBJECT = f"{EMAIL_SUBJECT_PREFIX}Povinné konzultace"
-CONSULTATION_EMAIL_TEMPLATE = "\
-Zbývá Vám pouze {remaining_days} dní na splnění \
-povinných konzultací v tomto období. \
-Máte splněno {have} konzultací z požadovaných {required}."
 
 ADMINS = [("Lukáš Veškrna", "lukas.veskrna@gmail.com")]

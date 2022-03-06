@@ -1,5 +1,6 @@
 from django.core.mail import send_mail
 from django.conf import settings
+from django.template.loader import render_to_string
 from django_q.tasks import async_task
 
 from .models import ConsultationPeriod, Consultation, User
@@ -9,7 +10,7 @@ from datetime import date
 def notify(email, have, required, remaining_days):
 	send_mail(
 		settings.CONSULTATION_EMAIL_SUBJECT,
-		settings.CONSULTATION_EMAIL_TEMPLATE.format(required=required, have=have, remaining_days=remaining_days),
+		render_to_string("submissions/emails/consultation.txt", {"required": required, "have": have, "remaining_days": remaining_days}),
 		None,
 		[email],
 		fail_silently=False,

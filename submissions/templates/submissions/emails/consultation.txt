@@ -1,0 +1,1 @@
+Zbývá již pouze {{ remaining_days }} dní na splnění povinných konzultací v tomto období. Máte splněno {{ have }} konzultací z požadovaných {{ required }}.

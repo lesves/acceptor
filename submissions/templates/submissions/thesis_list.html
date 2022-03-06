@@ -7,7 +7,7 @@
 	{% if subject %}
 		<h1>{{ subject }}</h1>
 	{% else %}
-		<h1>{% block heading %}Aktuální práce{% endblock %}</h1>
+		{% block heading %}<h1>Aktuální práce</h1>{% endblock %}
 	{% endif %}
 
 	<article>
