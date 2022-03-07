@@ -1,6 +1,7 @@
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 from . import models
 from .models import Thesis, Keyword
@@ -179,6 +180,13 @@ class SearchForm(forms.Form):
 			qs = qs.filter(year=self.cleaned_data["year"])
 
 		if self.cleaned_data["subject"]:
-			qs = qs.filter(subject=self.cleaned_data["subject"])
+			# Not so good hack for nested subjects
+			s = "subject"
+			query = Q(subject=self.cleaned_data["subject"])
+			for _ in range(6):
+				s += "__parent"
+				query |= Q(**{s: self.cleaned_data["subject"]})
+
+			qs = qs.filter(query)
 
 		return qs
