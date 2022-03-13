@@ -1,0 +1,44 @@
+version: "2"
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+  web:
+    build: .
+    command: sh -c "python3 manage.py migrate && gunicorn acceptor.wsgi:application --bind 0.0.0.0:8000"
+    expose:
+      - 8000
+    volumes:
+      - .:/app
+      - static:/app/static
+      - media:/app/media
+    depends_on:
+      - db
+  taskqueue:
+    build: .
+    command: sh -c "python3 manage.py setschedule && python3 manage.py qcluster"
+    volumes:
+      - .:/app
+    depends_on:
+      - web
+      - db
+  nginx:
+    build: ./nginx
+    volumes:
+      - static:/app/static
+      - media:/app/media
+    ports:
+      - 1337:80
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  static:
+  media:

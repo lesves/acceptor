@@ -27,9 +27,16 @@ dotenv.load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ["DEBUG"] == "True"
 
-ALLOWED_HOSTS = []
+if DEBUG:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", os.environ["HOST"]]
+
+    if os.environ.get("ORIGIN"):
+        CSRF_TRUSTED_ORIGINS = [os.environ["ORIGIN"]]
+else:
+    ALLOWED_HOSTS = [os.environ["HOST"]]
+    CSRF_TRUSTED_ORIGINS = [os.environ["ORIGIN"]]
 
 
 # Application definition
@@ -86,12 +93,24 @@ WSGI_APPLICATION = 'acceptor.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',
+            'USER': 'postgres',
+            'PASSWORD': 'postgres',
+            'HOST': "db",
+            'PORT': 5432,
+        }
+    }
 
 # Task queue
 # used for running scheduled tasks
