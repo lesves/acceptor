@@ -140,11 +140,8 @@ class ThesisOpinionUpdate(UserPassesTestMixin, UpdateView):
 
 	def form_valid(self, form):
 		res = super().form_valid(form)
-		if (form.instance.state and # TODO: solve this better
-				form.instance.state.code == "submitted" and 
-				form.instance.opponent_opinion and 
-				form.instance.supervisor_opinion):
-			form.instance.set_state_code("defense_ready", self.request.user)
+		if not form.instance.opinion_added(self.request.user):
+			raise PermissionDenied
 
 		return res
 
@@ -165,12 +162,8 @@ class ThesisAssignmentUpdate(ThesisUpdate):
 	fields = ["assignment"]
 
 	def post(self, request, *args, **kwargs):
-		if request.user == self.object.supervisor and not self.object.state.is_approved:
-			self.object.set_state_code("supervisor_approved", request.user)
-		elif request.user == self.object.author and not self.object.state.is_approved:
-			self.object.set_state_code("author_approved", request.user)
-		else:
-			raise PermissionDenied("This user cannot update the assignment.")
+		if not self.object.assignment_update(self.request.user):
+			raise PermissionDenied("Assignment could not be updated")
 
 		return super().post(self, request, *args, **kwargs)
 
@@ -184,6 +177,11 @@ class ThesisRelatedObjectCreate(CreateView):
 	def form_valid(self, form):
 		form.instance.thesis = self.thesis
 		return super().form_valid(form)
+
+	def get_context_data(self, **kwargs):
+		ctx = super().get_context_data(**kwargs)
+		ctx["object"] = self.thesis
+		return ctx
 
 	def get_success_url(self):
 		return self.thesis.get_absolute_url()
@@ -291,7 +289,8 @@ def consultation_delete(request, thesis_pk, pk):
 def approve(request, pk):
 	"""The current user approves the thesis assignment"""
 	thesis = get_object_or_404(Thesis, pk=pk)
-	thesis.approve(request.user)
+	if not thesis.approve(request.user):
+		raise PermissionDenied
 
 	return redirect("thesis-detail", pk=pk)
 
@@ -326,25 +325,25 @@ def unassign(request, pk, role):
 	to the thesis with the given `pk`
 	"""
 	thesis = get_object_or_404(Thesis, pk=pk)
-	if thesis.state.is_closed:
-		raise PermissionDenied("Cannot unassign from closed thesis.")
 
-	if role == "author" and thesis.author == request.user:
+	if (role == "author" and 
+			thesis.author == request.user and 
+			not thesis.state.is_approved):
 		thesis.author = None
-		if thesis.state.code == "approved":
-			thesis.set_state_code("supervisor_approved", request.user)
-	elif role == "supervisor" and thesis.supervisor == request.user:
+	elif (role == "supervisor" and 
+			thesis.supervisor == request.user and 
+			not thesis.state.is_approved):
 		thesis.supervisor = None
-		if thesis.state.code == "approved":
-			thesis.set_state_code("author_approved", request.user)
-	elif role == "opponent" and thesis.opponent == request.user:
+	elif (role == "opponent" and 
+			thesis.opponent == request.user and 
+			not thesis.state.is_closed):
 		thesis.opponent = None
 	else:
-		raise PermissionDenied("Cannot unassign. The given user is not assigned.")
+		raise PermissionDenied
 
 	if not thesis.author and not thesis.supervisor and not thesis.opponent:
 		thesis.delete()
-		return redirect("thesis-list")
+		return redirect("index")
 	else:
 		thesis.save()
 
@@ -356,10 +355,9 @@ def unassign(request, pk, role):
 def submit(request, pk):
 	"""The thesis is submitted"""
 	thesis = get_object_or_404(Thesis, pk=pk)
-	if request.user != thesis.author:
-		raise PermissionDenied("This user cannot submit this thesis.")
-	thesis.submit()
-	thesis.save()
+
+	if not thesis.submit(request.user):
+		raise PermissionDenied
 
 	return redirect("thesis-detail", pk=pk)
 
@@ -369,9 +367,8 @@ def submit(request, pk):
 def submit_cancel(request, pk):
 	"""Cancel the submission thesis"""
 	thesis = get_object_or_404(Thesis, pk=pk)
-	if request.user != thesis.author:
-		raise PermissionDenied("This user cannot cancel the submission of this thesis.")
-	thesis.cancel_submit()
-	thesis.save()
+
+	if not thesis.cancel_submit(request.user):
+		raise PermissionDenied
 
 	return redirect("thesis-detail", pk=pk)

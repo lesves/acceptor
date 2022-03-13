@@ -67,7 +67,12 @@ class Subject(models.Model):
 			stack.extend(subj.children.all())
 
 	def inherited_periods(self):
-		return ConsultationPeriod.objects.filter(subject__in=self.root.flattree())
+		node = self
+		periods = node.periods.all()
+		while node.parent:
+			node = node.parent
+			periods = periods.union(node.periods.all())
+		return periods
 
 	class Meta:
 		verbose_name = "Předmět"
@@ -260,40 +265,59 @@ class Thesis(models.Model):
 
 	# State transitions
 
+	def assignment_update(self, user):
+		if self.state.is_approved:
+			return False
+		if user == self.author:
+			if self.state.code == "supervisor_approved":
+				self.set_state_code("author_approved", user)
+			return True
+		elif user == self.supervisor:
+			if self.state.code == "author_approved":
+				self.set_state_code("supervisor_approved", user)
+			return True
+
+		return False
+
 	def approve(self, user):
-		"""Reflect the assignment approval of the given user in the state"""
+		if self.state.is_approved:
+			return False
+
 		if user == self.author and user == self.supervisor:
 			self.set_state_code("approved", user)
+			return True
 		elif user == self.author:
-			if not self.state:
-				self.set_state_code("author_approved", user)
-			elif self.state.code == "supervisor_approved":
+			if self.state.code == "supervisor_approved":
 				self.set_state_code("approved", user)
-			else:
-				raise PermissionDenied(
-					"Thesis not in correct state for approval.")
+				return True
 		elif user == self.supervisor:
-			if not self.state:
-				self.set_state_code("supervisor_approved", user)
-			elif self.state.code == "author_approved":
+			if self.state.code == "author_approved":
 				self.set_state_code("approved", user)
-			else:
-				raise PermissionDenied(
-					"Thesis not in correct state for approval.")
-		else:
-			raise PermissionDenied(
-				"Only the author or the supervisor \
-				can approve the assignment.")
+				return True
+		return False
 
-	def submit(self):
-		if not self.state.is_approved or self.state.is_submitted:
-			raise PermissionDenied("The thesis cannot be submitted in this state.")
+	def submit(self, user):
+		if not self.state.submittable or user != self.author:
+			return False
 		self.set_state_code("submitted", self.author)
+		return True
 
-	def cancel_submit(self):
-		if not self.state.is_submitted or self.state.is_closed:
-			raise PermissionDenied("Cannot cancel submission.")
+	def cancel_submit(self, user):
+		if (not self.state.is_submitted or 
+				self.state.is_closed or 
+				user != self.author):
+			return False
 		self.set_state_code("approved", self.author)
+		return True
+
+	def opinion_added(self, user):
+		if self.state.is_closed:
+			return False
+
+		if self.supervisor_opinion and self.opponent_opinion:
+			self.set_state_code("defense_ready", user)
+
+		return True
 
 	class Meta:
 		verbose_name = "Práce"

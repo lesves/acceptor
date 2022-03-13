@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <a role="button" href="{% url 'thesis-detail' pk=form.thesis.pk %}">Zpět</a>
+
     <form action="" method="post">
         {% csrf_token %}
         <table>

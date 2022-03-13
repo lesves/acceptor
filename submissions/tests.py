@@ -39,36 +39,48 @@ class ThesisTestCase(TestCase):
 			user=self.author,
 		)
 
+	def test_assignment_update(self):
+		self.thesis.set_state_code("author_approved", self.author)
+		self.assertTrue(self.thesis.assignment_update(self.author))
+		self.assertEqual(self.thesis.state.code, "author_approved")
+		self.assertTrue(self.thesis.assignment_update(self.supervisor))
+		self.assertEqual(self.thesis.state.code, "supervisor_approved")
+		self.assertTrue(self.thesis.assignment_update(self.author))
+		self.assertEqual(self.thesis.state.code, "author_approved")
+
 	def test_approval(self):
 		self.thesis.set_state_code("author_approved", self.author)
 		self.assertFalse(self.thesis.state.is_approved)
 
-		self.assertRaises(PermissionDenied, self.thesis.approve, self.author)
+		self.assertFalse(self.thesis.approve(self.author))
 		self.assertEqual(self.thesis.state.code, "author_approved")
-		self.thesis.approve(self.supervisor)
+		self.assertTrue(self.thesis.approve(self.supervisor))
 		self.assertEqual(self.thesis.state.code, "approved")
 
 		self.thesis.set_state_code("supervisor_approved", self.supervisor)
 
-		self.assertRaises(PermissionDenied, self.thesis.approve, self.supervisor)
+		self.assertFalse(self.thesis.approve(self.supervisor))
 		self.assertEqual(self.thesis.state.code, "supervisor_approved")
-		self.thesis.approve(self.author)
+		self.assertTrue(self.thesis.approve(self.author))
 		self.assertEqual(self.thesis.state.code, "approved")
 		self.assertTrue(self.thesis.state.is_approved)
 
 	def test_submit(self):
 		self.thesis.set_state_code("approved", self.supervisor)
 		self.assertFalse(self.thesis.state.is_submitted)
-		self.thesis.submit()
+		self.assertFalse(self.thesis.submit(self.supervisor))
+
+		self.assertTrue(self.thesis.submit(self.author))
 		self.assertTrue(self.thesis.state.is_submitted)
-		self.assertRaises(PermissionDenied, self.thesis.submit)
-		self.thesis.cancel_submit()
+		self.assertFalse(self.thesis.submit(self.author))
+
+		self.assertTrue(self.thesis.cancel_submit(self.author))
 		self.assertFalse(self.thesis.state.is_submitted)
-		self.assertRaises(PermissionDenied, self.thesis.cancel_submit)
+		self.assertFalse(self.thesis.cancel_submit(self.author))
 
 		self.thesis.set_state_code("defended", self.supervisor)
-		self.assertRaises(PermissionDenied, self.thesis.submit)
-		self.assertRaises(PermissionDenied, self.thesis.cancel_submit)
+		self.assertFalse(self.thesis.submit(self.author))
+		self.assertFalse(self.thesis.cancel_submit(self.author))
 
 
 class SystemTestCase(TestCase):
@@ -289,10 +301,3 @@ class SystemTestCase(TestCase):
 		self.assertEquals(thesis.state.code, "defended")
 
 		return thesis
-
-	def test_archive(self):
-		thesis = self.test_thesis_evaluation()
-
-		self.assertContains(self.client.get("/archive/"), str(thesis.year))
-		self.assertContains(self.client.get(f"/archive/search/?year={thesis.year}"), thesis.title)
-
