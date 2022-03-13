@@ -41,7 +41,7 @@ class CurrentThesisList(UserPassesTestMixin, ListView):
 
 		self.subject = models.Subject.objects.get(pk=self.kwargs["subject"])
 
-		return Thesis.objects.filter(subject__in=self.subject.flattree()).difference(Thesis.closed.all())
+		return Thesis.objects.filter(subject__in=self.subject.flattree(), year=models.current_year())
 
 	def get_context_data(self, **kwargs):
 		ctx = super().get_context_data()
@@ -111,14 +111,14 @@ class ThesisCreate(UserPassesTestMixin, CreateView):
 		)
 
 	def form_valid(self, form):
-		if self.request.user.has_perm("submissions.author"):
-			form.instance.author = self.request.user
-			form.instance.save()
-			form.instance.set_state_code("author_approved", self.request.user)
-		else:
+		if self.request.user.has_perm("submissions.supervisor"):
 			form.instance.supervisor = self.request.user
 			form.instance.save()
 			form.instance.set_state_code("supervisor_approved", self.request.user)
+		else:
+			form.instance.author = self.request.user
+			form.instance.save()
+			form.instance.set_state_code("author_approved", self.request.user)
 		return super().form_valid(form)
 
 
@@ -127,7 +127,7 @@ class ThesisUpdate(UserPassesTestMixin, UpdateView):
 
 	def test_func(self):
 		self.object = self.get_object()
-		return (
+		return not self.object.state.is_closed and (
 			self.request.user.has_perm("submissions.change_thesis") or 
 			self.request.user == self.object.supervisor or
 			self.request.user == self.object.author
@@ -151,7 +151,9 @@ class ThesisOpinionUpdate(UserPassesTestMixin, UpdateView):
 	def test_func(self):
 		"""Check if the user is either the author or the supervisor"""
 		self.object = self.get_object()
-		if self.role == "supervisor":
+		if self.object.state.is_closed:
+			return False
+		elif self.role == "supervisor":
 			return self.request.user == self.object.supervisor
 		elif self.role == "opponent":
 			return self.request.user == self.object.opponent
@@ -167,8 +169,6 @@ class ThesisAssignmentUpdate(ThesisUpdate):
 			self.object.set_state_code("supervisor_approved", request.user)
 		elif request.user == self.object.author and not self.object.state.is_approved:
 			self.object.set_state_code("author_approved", request.user)
-		elif request.user.has_perm("submissions.change_thesis"):
-			pass
 		else:
 			raise PermissionDenied("This user cannot update the assignment.")
 
@@ -250,10 +250,6 @@ class ArchiveSearch(SearchView):
 	form_class = forms.SearchForm
 
 
-def archive(request):
-	return render(request, "submissions/thesis_archive.html", {"years": Thesis.public_years()})
-
-
 @login_required
 @require_POST
 def attachment_delete(request, thesis_pk, pk):
@@ -305,6 +301,8 @@ def approve(request, pk):
 def assign(request, pk, role):
 	"""Assign the current user of `role` to the thesis with `pk`"""
 	thesis = get_object_or_404(Thesis, pk=pk)
+	if thesis.state.is_closed:
+		raise PermissionDenied("Cannot assign to closed thesis.")
 
 	if role == "author" and request.user.has_perm("submissions.author"):
 		thesis.author = request.user
@@ -328,10 +326,17 @@ def unassign(request, pk, role):
 	to the thesis with the given `pk`
 	"""
 	thesis = get_object_or_404(Thesis, pk=pk)
+	if thesis.state.is_closed:
+		raise PermissionDenied("Cannot unassign from closed thesis.")
+
 	if role == "author" and thesis.author == request.user:
 		thesis.author = None
+		if thesis.state.code == "approved":
+			thesis.set_state_code("supervisor_approved", request.user)
 	elif role == "supervisor" and thesis.supervisor == request.user:
 		thesis.supervisor = None
+		if thesis.state.code == "approved":
+			thesis.set_state_code("author_approved", request.user)
 	elif role == "opponent" and thesis.opponent == request.user:
 		thesis.opponent = None
 	else:

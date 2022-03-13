@@ -119,7 +119,7 @@ SOCIALACCOUNT_PROVIDERS = {
             'email',
         ],
         'APP': {
-            'client_id': '824128145343-nlm3r9b8ivh12mkmol2s2esd2gl1v9lp.apps.googleusercontent.com',
+            'client_id': os.environ["GOOGLE_AUTH_CLIENT_ID"],
             'secret': os.environ["GOOGLE_AUTH_SECRET"],
             'key': '',
         }

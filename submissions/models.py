@@ -14,7 +14,7 @@ import uuid
 import bleach
 
 
-ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u"]
+ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u", "br"]
 
 
 def current_year():
@@ -247,10 +247,11 @@ class Thesis(models.Model):
 	@classmethod
 	def current_of(cls, user):
 		"""Return a set of current theses of the given user"""
-		return (user.authored.all()
-			.union(user.supervised.all())
-			.union(user.opposed.all())
-			.difference(cls.closed.all()))
+		y = current_year()
+
+		return (user.authored.filter(year=y)
+			.union(user.supervised.filter(year=y))
+			.union(user.opposed.filter(year=y)))
 
 	@classmethod
 	def public_years(cls):

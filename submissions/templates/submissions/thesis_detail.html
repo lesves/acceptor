@@ -4,8 +4,10 @@
 
 {% block content %}
 	<h1>{{ object.title }}</h1>
+	{% if not object.state.is_closed %}
 	{% if perms.change_thesis or object.author == request.user or object.supervisor == request.user %}
 		<a href="{% url 'thesis-title' pk=object.pk %}" class="action" role="button">Upravit název</a>
+	{% endif %}
 	{% endif %}
 	<article>
 	<h2>Základní informace</h2>
@@ -15,12 +17,12 @@
 			<td>
 				{% if object.author is not None %}
 					{{ object.author.get_full_name }}
-					{% if object.author == request.user %}
+					{% if not object.state.is_closed and object.author == request.user %}
 						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="author" %}
 					{% endif %}
 				{% else %}
 					nepřiřazen
-					{% if perms.submissions.author %}
+					{% if not object.state.is_closed and perms.submissions.author %}
 						{% include 'submissions/basic_action.html' with name="Přiřadit se" action="thesis-assign" role="author" %}
 					{% endif %}
 				{% endif %}
@@ -31,12 +33,12 @@
 			<td>
 				{% if object.supervisor is not None %}
 					{{ object.supervisor.get_full_name }}
-					{% if object.supervisor == request.user %}
+					{% if not object.state.is_closed and object.supervisor == request.user %}
 						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="supervisor" %}
 					{% endif %}
 				{% else %}
 					nepřiřazen
-					{% if perms.submissions.supervisor %}
+					{% if not object.state.is_closed and perms.submissions.supervisor %}
 						{% include 'submissions/basic_action.html' with name="Přiřadit se" action="thesis-assign" role="supervisor" %}
 					{% endif %}
 				{% endif %}
@@ -47,17 +49,18 @@
 			<td>
 				{% if object.opponent is not None %}
 					{{ object.opponent.get_full_name }}
-					{% if object.opponent == request.user %}
+					{% if not object.state.is_closed and object.opponent == request.user %}
 						{% include 'submissions/basic_action.html' with name="Zrušit přiřazení" action="thesis-unassign" role="opponent" %}
 					{% endif %}
 				{% else %}
 					nepřiřazen
-					{% if perms.submissions.opponent %}
+					{% if not object.state.is_closed and perms.submissions.opponent %}
 						{% include 'submissions/basic_action.html' with name="Přiřadit se" action="thesis-assign" role="opponent" %}
 					{% endif %}
 				{% endif %}
 			</td>
 		</tr>
+		<tr><th>Ročník:</th><td>{{ object.year }}</td></tr>
 		<tr><th>Předmět:</th><td>{{ object.subject }}</td></tr>
 
 		<tr><th>Známka:</th><td>{{ object.mark_verbose }}</td></tr>
@@ -79,8 +82,10 @@
 				<span class="keyword">{{ keyword }}</span>
 			{% endfor %}
 		</div>
+		{% if not object.state.is_closed %}
 		{% if perms.change_thesis or object.supervisor == request.user %}
 			<a href="{% url 'thesis-keywords' pk=object.pk %}" class="action" role="button">Upravit klíčová slova</a>
+		{% endif %}
 		{% endif %}
 	</article>
 
@@ -88,8 +93,10 @@
 		<h2>Abstrakt</h2>
 		{{ object.abstract|default:"<p>Abstrakt ještě nebyl dodán.</p>"|safe }}
 
+		{% if not object.state.is_closed %}
 		{% if perms.change_thesis or object.supervisor == request.user %}
-			<a href="{% url 'thesis-abstract' pk=object.pk %}" role="button">Upravit abstrakt</a>
+			<a href="{% url 'thesis-abstract' pk=object.pk %}" class="action" role="button">Upravit abstrakt</a>
+		{% endif %}
 		{% endif %}
 	</article>
 
@@ -98,11 +105,8 @@
 		{{ object.assignment|safe }}
 		{% if not object.state.is_approved %}
 			{% if request.user == object.author or request.user == object.supervisor %}
-				<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
+				<a href="{% url 'thesis-assignment' pk=object.pk %}" class="action" role="button">Upravit zadání</a>
 			{% endif %}
-		{% elif perms.submissions.change_thesis %}
-			<a href="{% url 'thesis-assignment' pk=object.pk %}" role="button">Upravit zadání</a>
-			<p><em>Pozn: mějte na vědomí, že při úpravě zadání již nedojde k obnovení schvalovacího procesu</em></p>
 		{% endif %}
 
 		{% if request.user == object.author and object.state.code == "supervisor_approved" %}
@@ -146,8 +150,10 @@
 					</li>
 				{% endfor %}
 			</ul>
+			{% if not object.state.is_closed %}
 			{% if perms.submissions.change_thesis or request.user == object.supervisor %}
 				<a class="action" role="button" href="{% url 'consultation-create' pk=object.pk %}">Přidat konzultaci</a>
+			{% endif %}
 			{% endif %}
 		{% endif %}
 	</article>

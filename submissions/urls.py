@@ -132,7 +132,6 @@ urlpatterns = [
     ),
 
     # Archive
-    path('archive/', views.archive, name="archive"),
     path('archive/search/', views.ArchiveSearch.as_view(), name="archive-search")
 ]
 

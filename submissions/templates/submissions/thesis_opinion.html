@@ -3,7 +3,7 @@
 {% block title %} | Posudek {% if role == "opponent" %}oponenta{% else %}vedoucího{% endif %} k {{ object.title }}{% endblock %}
 
 {% block content %}
-	<a href="{% url 'thesis-detail' pk=object.pk %}">Zpět</a>
+	<a role="button" href="{% url 'thesis-detail' pk=object.pk %}">Zpět</a>
 
 	<h1>Posudek {% if role == "opponent" %}oponenta{% else %}vedoucího{% endif %} k {{ object.title }}</h1>
 	{% if role == "opponent" %}

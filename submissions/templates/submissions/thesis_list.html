@@ -11,14 +11,17 @@
 	{% endif %}
 
 	<article>
+		<figure>
 		<table>
 			<tr>
 				<th>Téma</th>
 				<th>Autor</th>
 				<th>Vedoucí</th>
 				<th>Oponent</th>
-				<th>Klíčová slova</th>
+				<th>Ročník</th>
+				<th>Stav</th>
 				<th>Předmět</th>
+				<th>Klíčová slova</th>
 			</tr>
 			{% for thesis in object_list %}
 				<tr>
@@ -26,10 +29,13 @@
 					<td>{{ thesis.author.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
 					<td>{{ thesis.supervisor.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
 					<td>{{ thesis.opponent.get_full_name|default:'<span class="unassigned">nepřiřazen</span>' }}</td>
-					<td>{% for kw in thesis.keywords.all %}<a class="keyword" href="{% url 'archive-search' %}?keywords={{ kw }}">{{ kw }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+					<td>{{ thesis.year }}</td>
+					<td>{{ thesis.state }}</td>
 					<td>{{ thesis.subject }}</td>
+					<td>{% for kw in thesis.keywords.all %}<a class="keyword" href="{% url 'archive-search' %}?keywords={{ kw }}">{{ kw }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td>
 				</tr>
 			{% endfor %}
 		</table>
+		</figure>
 	</article>
 {% endblock %}
