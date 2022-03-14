@@ -24,3 +24,11 @@ urlpatterns = [
     path('auth/', include('allauth.socialaccount.providers.google.urls'), name="socialaccount_signup"),
     path('', include("submissions.urls")),
 ]
+
+
+# Changes the title of admin
+from django.conf import settings
+
+admin.site.site_header = settings.ADMIN_SITE_TITLE
+admin.site.site_title = settings.ADMIN_SITE_TITLE
+admin.site.index_title = settings.ADMIN_INDEX_TITLE

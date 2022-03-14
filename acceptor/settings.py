@@ -217,6 +217,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Application related config
 
+ADMIN_SITE_TITLE = "Správa odevzdávacího systému"
+ADMIN_INDEX_TITLE = "Správa odevzdávacího systému maturitních prací"
+
 EMAIL_SUBJECT_PREFIX = "[Odevzdávací systém] "
 EMAIL_DOMAIN = "gjk.cz"
 IS_STUDENT_USERNAME = lambda username: username.startswith("x") and username[-1].isdigit()
