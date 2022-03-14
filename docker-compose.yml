@@ -22,7 +22,7 @@ services:
       - db
   taskqueue:
     build: .
-    command: sh -c "python3 manage.py setschedule && python3 manage.py qcluster"
+    command: sh -c "sleep 15; python3 manage.py setschedule && python3 manage.py qcluster"
     volumes:
       - .:/app
     depends_on:

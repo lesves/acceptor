@@ -29,6 +29,7 @@ class ThesisAdmin(admin.ModelAdmin):
     model = models.Thesis
 
     readonly_fields = ("state",)
+    filter_horizontal = ("keywords",)
 
     inlines = [ConsultationInline, LogEntryInline]
 

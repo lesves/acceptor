@@ -111,6 +111,7 @@ class ThesisCreate(UserPassesTestMixin, CreateView):
 		)
 
 	def form_valid(self, form):
+		# In here we also set the initial state of the thesis
 		if self.request.user.has_perm("submissions.supervisor"):
 			form.instance.supervisor = self.request.user
 			form.instance.save()

@@ -17,6 +17,10 @@ def apply_migration(apps, schema_editor):
         create_permissions(app_config, verbosity=0)
         app_config.models_module = None
 
+    ContentType = apps.get_model("contenttypes", "ContentType")
+    LogEntry = apps.get_model("submissions", "LogEntry")
+    content_type = ContentType.objects.get_for_model(LogEntry)
+
     Permission = apps.get_model("auth", "Permission")
     Group.objects.get(name="Studenti").permissions.add(
         Permission.objects.get(codename="add_thesis"),
@@ -24,10 +28,9 @@ def apply_migration(apps, schema_editor):
         Permission.objects.get(codename="author"),
     )
     Group.objects.get(name="Učitelé").permissions.add(
-        Permission.objects.get(codename="add_thesis"),
-        Permission.objects.get(codename="view_thesis"),
-        Permission.objects.get(codename="change_thesis"),
-        Permission.objects.get(codename="delete_thesis"),
+        *Permission.objects.filter(codename__contains="thesis"),
+        *Permission.objects.filter(codename__contains="keyword"),
+        *Permission.objects.filter(codename__contains="logentry", content_type=content_type),
         *Permission.objects.filter(codename__in=["supervisor", "opponent"])
     )
 
