@@ -6,13 +6,20 @@
     <script src="https://cdn.jsdelivr.net/npm/medium-editor@latest/dist/js/medium-editor.min.js"></script />
     <script>
         window.addEventListener("load", function() {
+            var txs = document.getElementsByTagName("textarea");
+            for (let i = 0; i < txs.length; i++) {
+                let info = document.createElement("small");
+                info.innerHTML = "(Po vybrání části textu se zobrazí možnosti formátování)";
+                txs[i].before(info)
+            }
+
             var editor = new MediumEditor("textarea", {
                     placeholder: {
                         text: "",
                         hideOnClick: true
                     },
                     toolbar: {
-                        buttons: ['bold', 'italic', 'underline', 'anchor']
+                        buttons: ['bold', 'italic', 'underline', 'anchor', 'h3']
                     },
             });
         });

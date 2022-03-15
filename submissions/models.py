@@ -14,7 +14,7 @@ import uuid
 import bleach
 
 
-ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u", "br"]
+ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["p", "u", "br", "h3"]
 
 
 def current_year():
