@@ -180,13 +180,13 @@ class SearchForm(forms.Form):
 			qs = qs.filter(year=self.cleaned_data["year"])
 
 		if self.cleaned_data["subject"]:
-			# Not so good hack for nested subjects
-			s = "subject"
-			query = Q(subject=self.cleaned_data["subject"])
-			for _ in range(6):
-				s += "__parent"
-				query |= Q(**{s: self.cleaned_data["subject"]})
+			#s = "subject"
+			#query = Q(subject=self.cleaned_data["subject"])
+			#for _ in range(self.cleaned_data["subject"].maxdepth):
+			#	s += "__parent"
+			#	query |= Q(**{s: self.cleaned_data["subject"]})
+			#qs = qs.filter(query)
 
-			qs = qs.filter(query)
+			qs = qs.filter(subject__in=self.cleaned_data["subject"].flattree())
 
 		return qs
