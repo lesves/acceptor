@@ -3,14 +3,14 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django_q.tasks import async_task
 
-from .models import ConsultationPeriod, Consultation, User
+from .models import Thesis, ConsultationPeriod, Consultation, User
 from datetime import date
 
 
-def notify(email, have, required, remaining_days):
+def notify(email, thesis, have, required, remaining_days):
 	send_mail(
 		settings.CONSULTATION_EMAIL_SUBJECT,
-		render_to_string("submissions/emails/consultation.txt", {"required": required, "have": have, "remaining_days": remaining_days}),
+		render_to_string("submissions/emails/consultation.txt", {"thesis": thesis, "required": required, "have": have, "remaining_days": remaining_days}),
 		None,
 		[email],
 		fail_silently=False,
@@ -24,8 +24,11 @@ def notifications(remaining=settings.CONSULTATION_EMAIL_DAYS_LEFT):
 
 		to_notify = []
 		if delta.days == remaining:
-			for thesis in period.subject.theses.all():
-				cons = thesis.periods()[period]
+			for thesis in Thesis.not_closed.all():
+				cons = thesis.periods().get(period)
+				if cons is None:
+					continue
+
 				if cons.count() < period.count:
 					if thesis.author and thesis.author.email:
-						async_task("submissions.tasks.notify", thesis.author.email, cons.count(), period.count, remaining)
+						async_task("submissions.tasks.notify", thesis.author.email, thesis, cons.count(), period.count, remaining)

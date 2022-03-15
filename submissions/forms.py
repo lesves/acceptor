@@ -21,7 +21,9 @@ class ConsultationForm(forms.ModelForm):
 
 		super().__init__(*args, **kwargs)
 
-		self.fields["period"].queryset = self.thesis.subject.inherited_periods()
+		self.fields["period"].queryset = models.ConsultationPeriod.objects.filter(
+			pk__in=(x.pk for x in self.thesis.subject.inherited_periods())
+		)
 
 	class Meta:
 		model = models.Consultation

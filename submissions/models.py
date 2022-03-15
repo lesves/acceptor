@@ -179,6 +179,7 @@ class Thesis(models.Model):
 
 	# Managers
 	objects = models.Manager()
+	not_closed = StateFilterManager(log_entries__state__is_closed=False)
 	closed = StateFilterManager(log_entries__state__is_closed=True)
 	public = StateFilterManager(log_entries__state__is_public=True)
 
@@ -246,7 +247,7 @@ class Thesis(models.Model):
 		"""Get the consultation periods and corresponding consultations as a dictionary"""
 		dct = {}
 		for period in self.subject.inherited_periods():
-			dct[period] = self.consultations.filter(period=period)
+			dct[period] = self.consultations.filter(thesis=self, period=period)
 		return dct
 
 	@classmethod

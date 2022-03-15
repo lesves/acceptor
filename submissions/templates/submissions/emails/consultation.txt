@@ -1,1 +1,1 @@
-Zbývá již pouze {{ remaining_days }} dní na splnění povinných konzultací v tomto období. Máte splněno {{ have }} konzultací z požadovaných {{ required }}.
+Zbývá již pouze {{ remaining_days }} dní na splnění povinných konzultací v tomto období. U vaší práce {{ thesis.title }} máte splněno {{ have }} konzultací z požadovaných {{ required }}.
